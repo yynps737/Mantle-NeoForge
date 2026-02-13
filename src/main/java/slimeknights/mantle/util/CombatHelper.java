@@ -30,12 +30,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.ForgeHooks;
-import net.minecraftforge.common.ToolAction;
-import net.minecraftforge.common.ToolActions;
-import net.minecraftforge.entity.PartEntity;
-import net.minecraftforge.event.ForgeEventFactory;
-import net.minecraftforge.event.entity.player.CriticalHitEvent;
+import net.neoforged.neoforge.common.CommonHooks;
+import net.neoforged.neoforge.common.ToolAction;
+import net.neoforged.neoforge.common.ToolActions;
+import net.neoforged.neoforge.entity.PartEntity;
+import net.neoforged.neoforge.event.EventHooks;
+import net.neoforged.neoforge.event.entity.player.CriticalHitEvent;
 import slimeknights.mantle.Mantle;
 
 import javax.annotation.Nullable;
@@ -138,7 +138,7 @@ public class CombatHelper {
   /**
    * Performs an attack, mimicing  {@link Player#attack(Entity)}.
    * For use in {@link net.minecraft.world.item.Item#interactLivingEntity(ItemStack, Player, LivingEntity, InteractionHand)} primarily,
-   * but can also be used to fake an attack similar to {@link net.minecraftforge.common.extensions.IForgeItem#onLeftClickEntity(ItemStack, Player, Entity)}.
+   * but can also be used to fake an attack similar to {@link net.neoforged.neoforge.common.extensions.IItemExtension#onLeftClickEntity(ItemStack, Player, Entity)}.
    *
    * @param stack         Stack used for attacking.
    * @param target        Entity target
@@ -188,7 +188,7 @@ public class CombatHelper {
 
         // find critical
         boolean critical = fullyCharged && player.fallDistance > 0.0F && !player.onGround() && !player.onClimbable() && !player.isSprinting() && !player.isInWater() && !player.hasEffect(MobEffects.BLINDNESS) && !player.isPassenger() && targetLiving != null;
-        CriticalHitEvent hitResult = ForgeHooks.getCriticalHit(player, target, critical, critical ? 1.5f : 1f);
+        CriticalHitEvent hitResult = CommonHooks.getCriticalHit(player, target, critical, critical ? 1.5f : 1f);
         critical = hitResult != null;
         if (critical) {
           damage *= hitResult.getDamageModifier();
@@ -298,7 +298,7 @@ public class CombatHelper {
             ItemStack copy = stack.copy();
             stack.hurtEnemy(living, player);
             if (stack.isEmpty()) {
-              ForgeEventFactory.onPlayerDestroyItem(player, copy, hand);
+              EventHooks.onPlayerDestroyItem(player, copy, hand);
               player.setItemInHand(hand, ItemStack.EMPTY);
             }
           }

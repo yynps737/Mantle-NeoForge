@@ -5,10 +5,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.server.packs.resources.SimpleJsonResourceReloadListener;
 import net.minecraft.util.GsonHelper;
-import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
-import net.minecraftforge.fluids.FluidType;
-import net.minecraftforge.registries.ForgeRegistries;
-import net.minecraftforge.registries.IForgeRegistry;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
+import net.neoforged.neoforge.registries.IRegistryExtension;
 import slimeknights.mantle.Mantle;
 import slimeknights.mantle.data.listener.IEarlySafeManagerReloadListener;
 import slimeknights.mantle.util.JsonHelper;
@@ -49,7 +49,7 @@ public class FluidTextureManager implements IEarlySafeManagerReloadListener {
 
     // start building fluid type map
     Map<FluidType, FluidTexture> map = new HashMap<>();
-    IForgeRegistry<FluidType> fluidTypeRegistry = ForgeRegistries.FLUID_TYPES.get();
+    IRegistryExtension<FluidType> fluidTypeRegistry = NeoForgeRegistries.FLUID_TYPES.get();
 
 
     for (Map.Entry<ResourceLocation,JsonElement> entry : jsons.entrySet()) {
