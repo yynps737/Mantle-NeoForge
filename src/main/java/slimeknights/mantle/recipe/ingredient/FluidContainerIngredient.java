@@ -9,7 +9,6 @@ import com.mojang.serialization.JsonOps;
 import com.mojang.serialization.MapCodec;
 import com.mojang.serialization.MapLike;
 import com.mojang.serialization.RecordBuilder;
-import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
@@ -65,10 +64,11 @@ public class FluidContainerIngredient implements ICustomIngredient {
           fluidIngredient = FluidIngredient.LOADABLE.convert(json, "fluid");
         }
 
-        // Parse optional display
+        // Parse optional display using Codec (fromJson removed in 1.21.1)
         Ingredient display = null;
         if (json.has("display")) {
-          display = Ingredient.fromJson(JsonHelper.getElement(json, "display"));
+          display = Ingredient.CODEC.parse(JsonOps.INSTANCE, JsonHelper.getElement(json, "display"))
+            .getOrThrow(msg -> new RuntimeException("Failed to parse display ingredient: " + msg));
         }
 
         return DataResult.success(new FluidContainerIngredient(fluidIngredient, display));
@@ -93,9 +93,11 @@ public class FluidContainerIngredient implements ICustomIngredient {
           prefix.add("fluid", fluidValue);
         }
 
-        // Serialize optional display
+        // Serialize optional display using Codec (toJson removed in 1.21.1)
         if (input.display != null) {
-          T displayValue = JsonOps.INSTANCE.convertTo(ops, input.display.toJson());
+          JsonElement displayElement = Ingredient.CODEC.encodeStart(JsonOps.INSTANCE, input.display)
+            .getOrThrow(msg -> new RuntimeException("Failed to encode display ingredient: " + msg));
+          T displayValue = JsonOps.INSTANCE.convertTo(ops, displayElement);
           prefix.add("display", displayValue);
         }
 
@@ -113,7 +115,7 @@ public class FluidContainerIngredient implements ICustomIngredient {
         FluidIngredient.LOADABLE.encode(buf, ingredient.fluidIngredient);
         if (ingredient.display != null) {
           buf.writeBoolean(true);
-          ingredient.display.toNetwork(buf);
+          Ingredient.CONTENTS_STREAM_CODEC.encode(buf, ingredient.display);
         } else {
           buf.writeBoolean(false);
         }
@@ -122,7 +124,7 @@ public class FluidContainerIngredient implements ICustomIngredient {
         FluidIngredient fluidIngredient = FluidIngredient.LOADABLE.decode(buf);
         Ingredient display = null;
         if (buf.readBoolean()) {
-          display = Ingredient.fromNetwork(buf);
+          display = Ingredient.CONTENTS_STREAM_CODEC.decode(buf);
         }
         return new FluidContainerIngredient(fluidIngredient, display);
       }

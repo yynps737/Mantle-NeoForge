@@ -15,7 +15,7 @@ import slimeknights.mantle.recipe.ingredient.PotionIngredient;
 public class MantleIngredientTypes {
   /** Deferred register for ingredient types */
   public static final DeferredRegister<IngredientType<?>> INGREDIENT_TYPES =
-    DeferredRegister.create(NeoForgeRegistries.Keys.INGREDIENT_TYPE, Mantle.modId);
+    DeferredRegister.create(NeoForgeRegistries.Keys.INGREDIENT_TYPES, Mantle.modId);
 
   // Ingredient type registrations
   public static final DeferredHolder<IngredientType<?>, IngredientType<PotionIngredient>> POTION =

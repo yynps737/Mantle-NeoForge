@@ -1,6 +1,7 @@
 package slimeknights.mantle.recipe.ingredient;
 
 import com.mojang.serialization.MapCodec;
+import net.minecraft.core.Holder;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -9,7 +10,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.alchemy.Potion;
 import net.minecraft.world.item.alchemy.PotionContents;
-import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.level.ItemLike;
 import net.neoforged.neoforge.common.crafting.IngredientType;
 import slimeknights.mantle.data.loadable.LoadableMapCodecWrapper;
@@ -66,13 +66,12 @@ public class PotionDisplayIngredient extends ItemIngredient {
     // Get base items from parent
     Stream<ItemStack> baseItems = super.getItems();
 
-    // For each base item, create variants with all potions
+    // For each base item, create variants with all registered potions using Holder<Potion>
     return baseItems.flatMap(baseStack ->
-      BuiltInRegistries.POTION.stream()
-        .filter(potion -> potion != Potions.EMPTY)
-        .map(potion -> {
+      BuiltInRegistries.POTION.holders()
+        .map((Holder<Potion> potionHolder) -> {
           ItemStack stack = baseStack.copy();
-          stack.set(net.minecraft.core.component.DataComponents.POTION_CONTENTS, new PotionContents(potion));
+          stack.set(net.minecraft.core.component.DataComponents.POTION_CONTENTS, new PotionContents(potionHolder));
           return stack;
         })
     );
