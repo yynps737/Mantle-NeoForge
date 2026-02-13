@@ -14,7 +14,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
 import net.minecraft.world.item.UseAnim;
 import net.minecraft.world.level.Level;
-import net.neoforged.neoforge.common.capabilities.ICapabilityProvider;
 import net.neoforged.neoforge.fluids.FluidStack;
 
 import javax.annotation.Nullable;
@@ -95,10 +94,7 @@ public class ContainerFoodItem extends Item {
       this.fluid = fluid;
     }
 
-    @Nullable
-    @Override
-    public ICapabilityProvider initCapabilities(ItemStack stack, @Nullable CompoundTag nbt) {
-      return new ConstantFluidContainerWrapper(fluid.get(), stack);
-    }
+    // Note: Capability system migrated in Layer 4
+    // FluidStack capabilities are now registered differently via RegisterCapabilitiesEvent
   }
 }
