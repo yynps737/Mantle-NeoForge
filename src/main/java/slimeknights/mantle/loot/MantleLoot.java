@@ -59,7 +59,7 @@ public class MantleLoot {
     ResourceKey<?> key = event.getRegistryKey();
 
     if (key == NeoForgeRegistries.Keys.GLOBAL_LOOT_MODIFIER_SERIALIZERS) {
-      RegistryAdapter<Codec<? extends IGlobalLootModifier>> adapter = new RegistryAdapter<>(Objects.requireNonNull(event.getForgeRegistry()));
+      RegistryAdapter<Codec<? extends IGlobalLootModifier>> adapter = new RegistryAdapter<>((net.neoforged.neoforge.registries.IRegistryExtension) Objects.requireNonNull(event.getRegistry()));
       adapter.register(AddEntryLootModifier.CODEC, "add_entry");
       adapter.register(ReplaceItemLootModifier.CODEC, "replace_item");
 

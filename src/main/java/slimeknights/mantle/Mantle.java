@@ -210,7 +210,7 @@ public class Mantle {
       }
     }
     else if (key == Registries.BLOCK_ENTITY_TYPE) {
-      BlockEntityTypeRegistryAdapter adapter = new BlockEntityTypeRegistryAdapter(Objects.requireNonNull(event.getForgeRegistry()));
+      BlockEntityTypeRegistryAdapter adapter = new BlockEntityTypeRegistryAdapter((net.neoforged.neoforge.registries.IRegistryExtension) Objects.requireNonNull(event.getRegistry()));
       Set<Block> signs = MantleSignBlockEntity.buildSignBlocks();
       if (!signs.isEmpty()) {
         adapter.register(MantleSignBlockEntity::new, signs, "sign");
