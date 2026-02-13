@@ -1,41 +1,55 @@
 package slimeknights.mantle.recipe.ingredient;
 
-import com.google.gson.JsonElement;
+import com.mojang.serialization.MapCodec;
+import net.minecraft.core.Holder;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.alchemy.Potion;
-import net.minecraft.world.item.alchemy.PotionUtils;
+import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
-import net.neoforged.neoforge.common.crafting.IIngredientSerializer;
+import net.neoforged.neoforge.common.crafting.IngredientType;
 import org.jetbrains.annotations.Nullable;
 import slimeknights.mantle.data.loadable.Loadables;
+import slimeknights.mantle.data.loadable.LoadableMapCodecWrapper;
 import slimeknights.mantle.data.loadable.record.RecordLoadable;
-import slimeknights.mantle.recipe.helper.LoadableIngredientSerializer;
+import slimeknights.mantle.registration.MantleIngredientTypes;
 
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Stream;
 
 /** Simple ingredient checking for an item with a specific potion */
 public class PotionIngredient extends ItemIngredient {
-  /** Ingredient serializer instance */
-  public static final LoadableIngredientSerializer<PotionIngredient> SERIALIZER = new LoadableIngredientSerializer<>(RecordLoadable.create(
-    ItemsField.INSTANCE, TAG_FIELD,
+  /** Loadable for serialization - preserving Mantle's loadable system */
+  private static final RecordLoadable<PotionIngredient> LOADABLE = RecordLoadable.create(
+    ItemsField.INSTANCE,
+    TAG_FIELD,
     Loadables.POTION.defaultField("potion", Potions.EMPTY, false, i -> i.potion),
     PotionIngredient::new
-  ));
+  );
+
+  /** MapCodec for NeoForge 1.21.1+ ingredient system */
+  public static final MapCodec<PotionIngredient> CODEC = new LoadableMapCodecWrapper<>(LOADABLE);
+
+  /** StreamCodec for network synchronization */
+  public static final StreamCodec<RegistryFriendlyByteBuf, PotionIngredient> STREAM_CODEC =
+    StreamCodec.of(
+      (buf, ingredient) -> LOADABLE.encode(buf, ingredient),
+      buf -> LOADABLE.decode(buf)
+    );
+
+  /** IngredientType for registration */
+  public static final IngredientType<PotionIngredient> TYPE = new IngredientType<>(CODEC, STREAM_CODEC);
 
   private final Potion potion;
+
   protected PotionIngredient(List<Item> items, @Nullable TagKey<Item> itemTag, Potion potion) {
-    // potion is added in directly to the parent value stream
-    super(items, itemTag, Stream.concat(
-      items.stream().map(item -> new ItemValue(PotionUtils.setPotion(new ItemStack(item), potion))),
-      Stream.ofNullable(itemTag).map(tag -> new PotionTagValue(tag, potion)))
-    );
+    super(items, itemTag);
     this.potion = potion;
   }
 
@@ -56,38 +70,50 @@ public class PotionIngredient extends ItemIngredient {
 
   @Override
   public boolean test(@Nullable ItemStack stack) {
-    // stack must match, any item must match, and potion must match
-    return stack != null && super.test(stack) && PotionUtils.getPotion(stack) == potion;
+    // stack must match item/tag, and potion must match
+    if (stack == null || !super.test(stack)) {
+      return false;
+    }
+    // Check potion using PotionContents component
+    PotionContents contents = stack.getOrDefault(net.minecraft.core.component.DataComponents.POTION_CONTENTS, PotionContents.EMPTY);
+    return contents.potion().isPresent() && contents.potion().get() == potion;
+  }
+
+  @Override
+  public Stream<ItemStack> getItems() {
+    // Get base items and apply potion to each
+    Stream<ItemStack> itemStacks = items.stream()
+      .map(item -> {
+        ItemStack stack = new ItemStack(item);
+        stack.set(net.minecraft.core.component.DataComponents.POTION_CONTENTS, new PotionContents(potion));
+        return stack;
+      });
+
+    if (tag != null) {
+      // Add items from tag with potion applied
+      Stream<ItemStack> tagStacks = BuiltInRegistries.ITEM.getTag(tag)
+        .stream()
+        .flatMap(named -> named.stream())
+        .map(Holder::value)
+        .map(item -> {
+          ItemStack stack = new ItemStack(item);
+          stack.set(net.minecraft.core.component.DataComponents.POTION_CONTENTS, new PotionContents(potion));
+          return stack;
+        });
+      itemStacks = Stream.concat(itemStacks, tagStacks);
+    }
+
+    return itemStacks;
   }
 
   @Override
   public boolean isSimple() {
+    // Returns false because we check potion data components
     return false;
   }
 
   @Override
-  public IIngredientSerializer<? extends Ingredient> getSerializer() {
-    return SERIALIZER;
-  }
-
-  @Override
-  public JsonElement toJson() {
-    return SERIALIZER.serialize(this);
-  }
-
-  /** Tag value that sets the potion on each returned item */
-  private static class PotionTagValue extends TagValue {
-    private final Potion potion;
-    public PotionTagValue(TagKey<Item> tag, Potion potion) {
-      super(tag);
-      this.potion = potion;
-    }
-
-    @Override
-    public Collection<ItemStack> getItems() {
-      return super.getItems().stream()
-        .map(item -> PotionUtils.setPotion(item, potion))
-        .toList();
-    }
+  public IngredientType<?> getType() {
+    return MantleIngredientTypes.POTION.get();
   }
 }

@@ -5,24 +5,21 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import lombok.RequiredArgsConstructor;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.neoforged.neoforge.common.crafting.AbstractIngredient;
-import net.neoforged.neoforge.common.crafting.IIngredientSerializer;
-import net.neoforged.neoforge.common.crafting.VanillaIngredientSerializer;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.List;
 
 /**
- * Ingredient for a non-NBT sensitive item from another mod, should never be used outside datagen
+ * Ingredient for a non-NBT sensitive item from another mod, should never be used outside datagen.
+ * This is a pure JSON generation utility - it does not participate in runtime ingredient matching.
+ *
+ * In NeoForge 1.21.1, Ingredient is final and AbstractIngredient was removed,
+ * so this class generates ingredient JSON directly without inheriting from Ingredient.
  */
-public class ItemNameIngredient extends AbstractIngredient {
+public class ItemNameIngredient {
   private final List<ResourceLocation> names;
+
   protected ItemNameIngredient(List<ResourceLocation> names) {
-    super(names.stream().map(NamedValue::new));
     this.names = names;
   }
 
@@ -36,19 +33,14 @@ public class ItemNameIngredient extends AbstractIngredient {
     return from(Arrays.asList(names));
   }
 
-  @Override
-  public boolean test(@Nullable ItemStack stack) {
-    throw new UnsupportedOperationException();
-  }
-
-  /** Creates a JSON object for a name */
+  /** Creates a JSON object for a single item name */
   private static JsonObject forName(ResourceLocation name) {
     JsonObject json = new JsonObject();
     json.addProperty("item", name.toString());
     return json;
   }
 
-  @Override
+  /** Serializes this ingredient to JSON for use in datagen */
   public JsonElement toJson() {
     if (names.size() == 1) {
       return forName(names.get(0));
@@ -58,32 +50,5 @@ public class ItemNameIngredient extends AbstractIngredient {
       array.add(forName(name));
     }
     return array;
-  }
-
-  @Override
-  public boolean isSimple() {
-    return false;
-  }
-
-  @Override
-  public IIngredientSerializer<? extends Ingredient> getSerializer() {
-    return VanillaIngredientSerializer.INSTANCE;
-  }
-
-  @RequiredArgsConstructor
-  public static class NamedValue implements Ingredient.Value {
-    private final ResourceLocation name;
-
-    @Override
-    public Collection<ItemStack> getItems() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public JsonObject serialize() {
-      JsonObject json = new JsonObject();
-      json.addProperty("item", name.toString());
-      return json;
-    }
   }
 }

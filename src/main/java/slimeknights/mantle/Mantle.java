@@ -74,6 +74,7 @@ import slimeknights.mantle.recipe.helper.TagPreference;
 import slimeknights.mantle.recipe.ingredient.FluidContainerIngredient;
 import slimeknights.mantle.recipe.ingredient.PotionDisplayIngredient;
 import slimeknights.mantle.recipe.ingredient.PotionIngredient;
+import slimeknights.mantle.registration.MantleIngredientTypes;
 import slimeknights.mantle.registration.RegistrationHelper;
 import slimeknights.mantle.registration.adapter.BlockEntityTypeRegistryAdapter;
 import slimeknights.mantle.util.OffhandCooldownTracker;
@@ -108,6 +109,9 @@ public class Mantle {
     MantleTags.init();
 
     instance = this;
+    // Register ingredient types for NeoForge 1.21.1+
+    MantleIngredientTypes.INGREDIENT_TYPES.register(modEventBus);
+
     modEventBus.addListener(EventPriority.NORMAL, false, FMLCommonSetupEvent.class, this::commonSetup);
     modEventBus.addListener(EventPriority.NORMAL, false, RegisterCapabilitiesEvent.class, this::registerCapabilities);
     modEventBus.addListener(EventPriority.NORMAL, false, GatherDataEvent.class, this::gatherData);
@@ -137,9 +141,7 @@ public class Mantle {
       CraftingHelper.register(TagEmptyCondition.SERIALIZER);
       CraftingHelper.register(TagFilledCondition.SERIALIZER);
       CraftingHelper.register(TagCombinationCondition.SERIALIZER);
-      CraftingHelper.register(FluidContainerIngredient.ID, FluidContainerIngredient.SERIALIZER);
-      CraftingHelper.register(getResource("potion"), PotionIngredient.SERIALIZER);
-      CraftingHelper.register(getResource("potion_display"), PotionDisplayIngredient.SERIALIZER);
+      // Note: Ingredient types now registered via MantleIngredientTypes.INGREDIENT_TYPES in constructor
 
       // fluid container transfer
       FluidContainerTransferManager.TRANSFER_LOADERS.registerDeserializer(EmptyFluidContainerTransfer.ID, EmptyFluidContainerTransfer.DESERIALIZER);

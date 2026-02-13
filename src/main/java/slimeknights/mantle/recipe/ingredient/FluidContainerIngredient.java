@@ -2,19 +2,29 @@ package slimeknights.mantle.recipe.ingredient;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
+import com.mojang.serialization.DynamicOps;
+import com.mojang.serialization.JsonOps;
+import com.mojang.serialization.MapCodec;
+import com.mojang.serialization.MapLike;
+import com.mojang.serialization.RecordBuilder;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.common.crafting.AbstractIngredient;
-import net.neoforged.neoforge.common.crafting.IIngredientSerializer;
+import net.neoforged.neoforge.common.crafting.ICustomIngredient;
+import net.neoforged.neoforge.common.crafting.IngredientType;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 import slimeknights.mantle.Mantle;
+import slimeknights.mantle.registration.MantleIngredientTypes;
 import slimeknights.mantle.registration.object.FluidObject;
 import slimeknights.mantle.util.JsonHelper;
 
@@ -24,18 +34,110 @@ import java.util.stream.Stream;
 
 /** Ingredient that matches a container of fluid */
 @SuppressWarnings("unused")  // API
-public class FluidContainerIngredient extends AbstractIngredient {
+public class FluidContainerIngredient implements ICustomIngredient {
   public static final ResourceLocation ID = Mantle.getResource("fluid_container");
-  public static final Serializer SERIALIZER = new Serializer();
+
+  /** Custom MapCodec for complex serialization logic */
+  public static final MapCodec<FluidContainerIngredient> CODEC = new MapCodec<>() {
+    @Override
+    public <T> Stream<T> keys(DynamicOps<T> ops) {
+      return Stream.of(ops.createString("fluid"), ops.createString("display"));
+    }
+
+    @Override
+    public <T> DataResult<FluidContainerIngredient> decode(DynamicOps<T> ops, MapLike<T> input) {
+      try {
+        // Convert to JsonObject for parsing
+        JsonObject json = new JsonObject();
+        input.entries().forEach(pair -> {
+          String key = ops.getStringValue(pair.getFirst()).result().orElse(null);
+          if (key != null && !key.equals("neoforge:ingredient_type") && !key.equals("type")) {
+            JsonElement element = ops.convertTo(JsonOps.INSTANCE, pair.getSecond());
+            json.add(key, element);
+          }
+        });
+
+        // Parse fluid ingredient
+        FluidIngredient fluidIngredient;
+        if (json.has("fluid") && !json.get("fluid").isJsonPrimitive()) {
+          fluidIngredient = FluidIngredient.LOADABLE.getIfPresent(json, "fluid");
+        } else {
+          fluidIngredient = FluidIngredient.LOADABLE.convert(json, "fluid");
+        }
+
+        // Parse optional display
+        Ingredient display = null;
+        if (json.has("display")) {
+          display = Ingredient.fromJson(JsonHelper.getElement(json, "display"));
+        }
+
+        return DataResult.success(new FluidContainerIngredient(fluidIngredient, display));
+      } catch (Exception e) {
+        return DataResult.error(() -> "Failed to decode FluidContainerIngredient: " + e.getMessage());
+      }
+    }
+
+    @Override
+    public <T> RecordBuilder<T> encode(FluidContainerIngredient input, DynamicOps<T> ops, RecordBuilder<T> prefix) {
+      try {
+        // Serialize fluid ingredient
+        JsonElement fluidElement = input.fluidIngredient.serialize();
+        if (fluidElement.isJsonObject()) {
+          JsonObject fluidObj = fluidElement.getAsJsonObject();
+          for (var entry : fluidObj.entrySet()) {
+            T value = JsonOps.INSTANCE.convertTo(ops, entry.getValue());
+            prefix.add(entry.getKey(), value);
+          }
+        } else {
+          T fluidValue = JsonOps.INSTANCE.convertTo(ops, fluidElement);
+          prefix.add("fluid", fluidValue);
+        }
+
+        // Serialize optional display
+        if (input.display != null) {
+          T displayValue = JsonOps.INSTANCE.convertTo(ops, input.display.toJson());
+          prefix.add("display", displayValue);
+        }
+
+        return prefix;
+      } catch (Exception e) {
+        return prefix.withErrorsFrom(DataResult.error(() -> "Failed to encode FluidContainerIngredient: " + e.getMessage()));
+      }
+    }
+  };
+
+  /** StreamCodec for network synchronization */
+  public static final StreamCodec<RegistryFriendlyByteBuf, FluidContainerIngredient> STREAM_CODEC =
+    StreamCodec.of(
+      (buf, ingredient) -> {
+        FluidIngredient.LOADABLE.encode(buf, ingredient.fluidIngredient);
+        if (ingredient.display != null) {
+          buf.writeBoolean(true);
+          ingredient.display.toNetwork(buf);
+        } else {
+          buf.writeBoolean(false);
+        }
+      },
+      buf -> {
+        FluidIngredient fluidIngredient = FluidIngredient.LOADABLE.decode(buf);
+        Ingredient display = null;
+        if (buf.readBoolean()) {
+          display = Ingredient.fromNetwork(buf);
+        }
+        return new FluidContainerIngredient(fluidIngredient, display);
+      }
+    );
+
+  /** IngredientType for registration */
+  public static final IngredientType<FluidContainerIngredient> TYPE = new IngredientType<>(CODEC, STREAM_CODEC);
 
   /** Ingredient to use for matching */
   private final FluidIngredient fluidIngredient;
   /** Internal ingredient to display the ingredient recipe viewers */
   @Nullable
   private final Ingredient display;
-  private ItemStack[] displayStacks;
+
   protected FluidContainerIngredient(FluidIngredient fluidIngredient, @Nullable Ingredient display) {
-    super(Stream.of());
     this.fluidIngredient = fluidIngredient;
     this.display = display;
   }
@@ -80,39 +182,12 @@ public class FluidContainerIngredient extends AbstractIngredient {
   }
 
   @Override
-  public ItemStack[] getItems() {
-    if (displayStacks == null) {
-      // no container? unfortunately hard to display this recipe so show nothing
-      if (display == null) {
-        displayStacks = new ItemStack[0];
-      } else {
-        displayStacks = display.getItems();
-      }
+  public Stream<ItemStack> getItems() {
+    // no container? unfortunately hard to display this recipe so show nothing
+    if (display == null) {
+      return Stream.empty();
     }
-    return displayStacks;
-  }
-
-  @Override
-  public JsonElement toJson() {
-    JsonElement element = fluidIngredient.serialize();
-    JsonObject json;
-    if (element.isJsonObject()) {
-      json = element.getAsJsonObject();
-    } else {
-      json = new JsonObject();
-      json.add("fluid", element);
-    }
-    json.addProperty("type", ID.toString());
-    if (display != null) {
-      json.add("display", display.toJson());
-    }
-    return json;
-  }
-
-  @Override
-  protected void invalidate() {
-    super.invalidate();
-    this.displayStacks = null;
+    return Stream.of(display.getItems());
   }
 
   @Override
@@ -121,52 +196,7 @@ public class FluidContainerIngredient extends AbstractIngredient {
   }
 
   @Override
-  public boolean isEmpty() {
-    return false;
-  }
-
-  @Override
-  public IIngredientSerializer<? extends Ingredient> getSerializer() {
-    return SERIALIZER;
-  }
-
-  /** Serializer logic */
-  private static class Serializer implements IIngredientSerializer<FluidContainerIngredient> {
-    @Override
-    public FluidContainerIngredient parse(JsonObject json) {
-      FluidIngredient fluidIngredient;
-      // if we have fluid and its not a primitive, then its nested
-      if (json.has("fluid") && !json.get("fluid").isJsonPrimitive()) {
-        fluidIngredient = FluidIngredient.LOADABLE.getIfPresent(json, "fluid");
-      } else {
-        fluidIngredient = FluidIngredient.LOADABLE.convert(json, "fluid");
-      }
-      Ingredient display = null;
-      if (json.has("display")) {
-        display = Ingredient.fromJson(JsonHelper.getElement(json, "display"));
-      }
-      return new FluidContainerIngredient(fluidIngredient, display);
-    }
-
-    @Override
-    public FluidContainerIngredient parse(FriendlyByteBuf buffer) {
-      FluidIngredient fluidIngredient = FluidIngredient.LOADABLE.decode(buffer);
-      Ingredient display = null;
-      if (buffer.readBoolean()) {
-        display = Ingredient.fromNetwork(buffer);
-      }
-      return new FluidContainerIngredient(fluidIngredient, display);
-    }
-
-    @Override
-    public void write(FriendlyByteBuf buffer, FluidContainerIngredient ingredient) {
-      FluidIngredient.LOADABLE.encode(buffer, ingredient.fluidIngredient);
-      if (ingredient.display != null) {
-        buffer.writeBoolean(true);
-        ingredient.display.toNetwork(buffer);
-      } else {
-        buffer.writeBoolean(false);
-      }
-    }
+  public IngredientType<?> getType() {
+    return MantleIngredientTypes.FLUID_CONTAINER.get();
   }
 }

@@ -2,28 +2,25 @@ package slimeknights.mantle.recipe.data;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.crafting.Ingredient;
-import net.minecraft.world.level.ItemLike;
 
 import javax.annotation.Nullable;
-import java.util.Objects;
-import java.util.stream.Stream;
 
 /**
- * Ingredient for a NBT sensitive item from another mod, should never be used outside datagen
- * @deprecated StrictNBTIngredient was removed in NeoForge 1.21.1. Use DataComponentIngredient instead.
+ * Ingredient for a NBT sensitive item from another mod, should never be used outside datagen.
+ * This is a pure JSON generation utility - it does not participate in runtime ingredient matching.
+ *
+ * In NeoForge 1.21.1, Ingredient is final and StrictNBTIngredient was removed,
+ * so this class generates ingredient JSON directly.
+ * For runtime NBT/component matching, use DataComponentIngredient instead.
  */
-@Deprecated(forRemoval = true)
-public class NBTNameIngredient extends Ingredient {
+public class NBTNameIngredient {
   private final ResourceLocation name;
   @Nullable
   private final CompoundTag nbt;
 
   protected NBTNameIngredient(ResourceLocation name, @Nullable CompoundTag nbt) {
-    super(Stream.empty());
     this.name = name;
     this.nbt = nbt;
   }
@@ -47,13 +44,14 @@ public class NBTNameIngredient extends Ingredient {
     return new NBTNameIngredient(name, null);
   }
 
-  @Override
-  public boolean test(@Nullable ItemStack stack) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
+  /** Serializes this ingredient to JSON for use in datagen */
   public JsonElement toJson() {
-    throw new UnsupportedOperationException("NBTNameIngredient is deprecated. StrictNBTIngredient was removed in NeoForge 1.21.1. Use DataComponentIngredient instead.");
+    JsonObject json = new JsonObject();
+    json.addProperty("type", "neoforge:data_component");
+    json.addProperty("item", name.toString());
+    if (nbt != null) {
+      json.addProperty("nbt", nbt.toString());
+    }
+    return json;
   }
 }
