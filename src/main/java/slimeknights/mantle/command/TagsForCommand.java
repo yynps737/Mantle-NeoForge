@@ -38,8 +38,7 @@ import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.neoforged.neoforge.common.NeoForgeMod;
-import net.neoforged.neoforge.common.capabilities.ForgeCapabilities;
-import net.neoforged.neoforge.common.util.LazyOptional;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
@@ -178,7 +177,7 @@ public class TagsForCommand {
   private static int heldFluid(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
     CommandSourceStack source = context.getSource();
     ItemStack stack = source.getPlayerOrException().getMainHandItem();
-    LazyOptional<IFluidHandlerItem> capability = stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM);
+    LazyOptional<IFluidHandlerItem> capability = stack.getCapability(Capabilities.FluidHandler.ITEM);
     if (capability.isPresent()) {
       IFluidHandler handler = capability.map(h -> (IFluidHandler) h).orElse(EmptyFluidHandler.INSTANCE);
       if (handler.getTanks() > 0) {

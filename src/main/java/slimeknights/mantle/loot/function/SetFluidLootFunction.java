@@ -8,7 +8,7 @@ import net.minecraft.world.level.storage.loot.LootContext;
 import net.minecraft.world.level.storage.loot.functions.LootItemConditionalFunction;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 import net.minecraft.world.level.storage.loot.predicates.LootItemCondition;
-import net.neoforged.neoforge.common.capabilities.ForgeCapabilities;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler.FluidAction;
 import slimeknights.mantle.data.loadable.common.FluidStackLoadable;
@@ -29,7 +29,7 @@ public class SetFluidLootFunction extends LootItemConditionalFunction {
 
   @Override
   protected ItemStack run(ItemStack stack, LootContext context) {
-    return stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM)
+    return stack.getCapability(Capabilities.FluidHandler.ITEM)
                 .map(handler -> {
                   handler.fill(fluid.copy(), FluidAction.EXECUTE);
                   return handler.getContainer();

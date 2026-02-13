@@ -23,8 +23,7 @@ import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.phys.BlockHitResult;
 import net.neoforged.neoforge.common.SoundAction;
 import net.neoforged.neoforge.common.SoundActions;
-import net.neoforged.neoforge.common.capabilities.ForgeCapabilities;
-import net.neoforged.neoforge.common.util.LazyOptional;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
@@ -143,7 +142,7 @@ public class FluidTransferHelper {
     if (player.getItemInHand(hand).getItem() instanceof BucketItem) {
       BlockEntity te = world.getBlockEntity(pos);
       if (te != null) {
-        LazyOptional<IFluidHandler> teCapability = te.getCapability(ForgeCapabilities.FLUID_HANDLER, hit);
+        LazyOptional<IFluidHandler> teCapability = te.getCapability(Capabilities.FluidHandler.BLOCK, hit);
         if (teCapability.isPresent()) {
           return interactWithFilledBucket(world, pos, teCapability.orElse(EmptyFluidHandler.INSTANCE), player, hand, offset).hasContainer();
         }
@@ -221,7 +220,7 @@ public class FluidTransferHelper {
       BlockEntity te = world.getBlockEntity(pos);
       if (te != null) {
         // TE must have a capability
-        LazyOptional<IFluidHandler> teCapability = te.getCapability(ForgeCapabilities.FLUID_HANDLER, hit.getDirection());
+        LazyOptional<IFluidHandler> teCapability = te.getCapability(Capabilities.FluidHandler.BLOCK, hit.getDirection());
         if (teCapability.isPresent()) {
           return interactWithContainer(world, pos, teCapability.orElse(EmptyFluidHandler.INSTANCE), player, hand);
         }
@@ -266,7 +265,7 @@ public class FluidTransferHelper {
 
     // if the item has a capability, do a direct transfer
     ItemStack copy = ItemHandlerHelper.copyStackWithSize(stack, 1);
-    LazyOptional<IFluidHandlerItem> itemCapability = copy.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM);
+    LazyOptional<IFluidHandlerItem> itemCapability = copy.getCapability(Capabilities.FluidHandler.ITEM);
     if (itemCapability.isPresent()) {
       FluidInteractionResult result = FluidInteractionResult.CONTAINER;
       if (!world.isClientSide) {
@@ -326,7 +325,7 @@ public class FluidTransferHelper {
     if (!player.getItemInHand(hand).isEmpty()) {
       BlockEntity te = world.getBlockEntity(pos);
       if (te != null) {
-        LazyOptional<IFluidHandler> teCapability = te.getCapability(ForgeCapabilities.FLUID_HANDLER, hit);
+        LazyOptional<IFluidHandler> teCapability = te.getCapability(Capabilities.FluidHandler.BLOCK, hit);
         if (teCapability.isPresent()) {
           IFluidHandler handler = teCapability.orElse(EmptyFluidHandler.INSTANCE);
           return interactWithContainer(world, pos, handler, player, hand).hasContainer()
@@ -375,7 +374,7 @@ public class FluidTransferHelper {
 
       // if the item has a capability, do a direct transfer
       ItemStack copy = ItemHandlerHelper.copyStackWithSize(stack, 1);
-      LazyOptional<IFluidHandlerItem> itemCapability = copy.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM);
+      LazyOptional<IFluidHandlerItem> itemCapability = copy.getCapability(Capabilities.FluidHandler.ITEM);
       if (itemCapability.isPresent()) {
         IFluidHandlerItem itemHandler = itemCapability.resolve().orElseThrow();
         // first, try filling the TE from the item
@@ -445,7 +444,7 @@ public class FluidTransferHelper {
 
       // if the item has a capability, do a direct transfer
       ItemStack copy = ItemHandlerHelper.copyStackWithSize(stack, 1);
-      LazyOptional<IFluidHandlerItem> itemCapability = copy.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM);
+      LazyOptional<IFluidHandlerItem> itemCapability = copy.getCapability(Capabilities.FluidHandler.ITEM);
       if (itemCapability.isPresent()) {
         IFluidHandlerItem itemHandler = itemCapability.resolve().orElseThrow();
         // first, try filling the TE from the item

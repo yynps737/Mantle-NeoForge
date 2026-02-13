@@ -1,6 +1,5 @@
 package slimeknights.mantle.util;
 
-import net.neoforged.neoforge.common.util.NonNullConsumer;
 
 import java.lang.ref.WeakReference;
 

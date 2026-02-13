@@ -32,7 +32,7 @@ import net.neoforged.neoforge.client.event.RenderGuiOverlayEvent;
 import net.neoforged.neoforge.client.gui.overlay.NamedGuiOverlay;
 import net.neoforged.neoforge.client.gui.overlay.VanillaGuiOverlay;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.common.capabilities.ForgeCapabilities;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -232,7 +232,7 @@ public class ClientEvents {
       return;
     }
     // block entity must have a fluid handler
-    IFluidHandler handler = gaugeContainer.getCapability(ForgeCapabilities.FLUID_HANDLER, side).orElse(EmptyFluidHandler.INSTANCE);
+    IFluidHandler handler = gaugeContainer.getCapability(Capabilities.FluidHandler.BLOCK, side).orElse(EmptyFluidHandler.INSTANCE);
     if (handler.getTanks() <= 0) {
       return;
     }

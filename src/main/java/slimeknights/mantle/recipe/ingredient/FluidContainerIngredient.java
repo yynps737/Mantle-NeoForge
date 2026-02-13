@@ -7,7 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.material.Fluid;
-import net.neoforged.neoforge.common.capabilities.ForgeCapabilities;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.crafting.AbstractIngredient;
 import net.neoforged.neoforge.common.crafting.IIngredientSerializer;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -58,14 +58,14 @@ public class FluidContainerIngredient extends AbstractIngredient {
   @Override
   public boolean test(@Nullable ItemStack stack) {
     // first, must have a fluid capability
-    return stack != null && !stack.isEmpty() && stack.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).resolve().flatMap(cap -> {
+    return stack != null && !stack.isEmpty() && stack.getCapability(Capabilities.FluidHandler.ITEM).resolve().flatMap(cap -> {
       // second, must contain enough fluid
       if (cap.getTanks() == 1) {
         FluidStack contained = cap.getFluidInTank(0);
         if (!contained.isEmpty() && fluidIngredient.getAmount(contained.getFluid()) == contained.getAmount() && fluidIngredient.test(contained.getFluid())) {
           // so far so good, from this point on we are forced to make copies as we need to try draining, so copy and fetch the copy's cap
           ItemStack copy = ItemHandlerHelper.copyStackWithSize(stack, 1);
-          return copy.getCapability(ForgeCapabilities.FLUID_HANDLER_ITEM).resolve();
+          return copy.getCapability(Capabilities.FluidHandler.ITEM).resolve();
         }
       }
       return Optional.empty();
