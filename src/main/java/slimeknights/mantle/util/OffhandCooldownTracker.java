@@ -10,9 +10,9 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.neoforged.neoforge.capabilities.EntityCapability;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.network.PacketDistributor;
 import slimeknights.mantle.Mantle;
-import slimeknights.mantle.network.MantleNetwork;
-import slimeknights.mantle.network.packet.SwingArmPacket;
+import slimeknights.mantle.network.packet.SwingArmPayload;
 
 import javax.annotation.Nullable;
 import java.util.HashMap;
@@ -166,11 +166,11 @@ public class OffhandCooldownTracker {
       entity.swinging = true;
       entity.swingingArm = hand;
       if (!entity.level().isClientSide) {
-        SwingArmPacket packet = new SwingArmPacket(entity, hand);
+        SwingArmPayload payload = new SwingArmPayload(entity.getId(), hand);
         if (updateSelf) {
-          MantleNetwork.INSTANCE.sendToTrackingAndSelf(packet, entity);
+          PacketDistributor.sendToPlayersTrackingEntityAndSelf(entity, payload);
         } else {
-          MantleNetwork.INSTANCE.sendToTracking(packet, entity);
+          PacketDistributor.sendToPlayersTrackingEntity(entity, payload);
         }
       }
     }

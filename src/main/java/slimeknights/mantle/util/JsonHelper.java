@@ -11,6 +11,7 @@ import com.mojang.serialization.Codec;
 import com.mojang.serialization.Dynamic;
 import com.mojang.serialization.JsonOps;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
@@ -18,14 +19,11 @@ import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.event.OnDatapackSyncEvent;
 import net.neoforged.neoforge.network.PacketDistributor;
-import net.neoforged.neoforge.network.PacketDistributor.PacketTarget;
 import net.neoforged.neoforge.registries.IRegistryExtension;
 import org.jetbrains.annotations.Contract;
 import slimeknights.mantle.Mantle;
 import slimeknights.mantle.data.loadable.Loadable;
 import slimeknights.mantle.data.loadable.common.BlockStateLoadable;
-import slimeknights.mantle.network.NetworkWrapper;
-import slimeknights.mantle.network.packet.ISimplePacket;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -298,8 +296,8 @@ public class JsonHelper {
       }).filter(Objects::nonNull).toList();
   }
 
-  /** Sends the packet to the given player */
-  private static void sendPackets(NetworkWrapper network, ServerPlayer player, ISimplePacket[] packets) {
+  /** Sends the payloads to the given player */
+  private static void sendPayloads(ServerPlayer player, CustomPacketPayload[] payloads) {
     // on an integrated server, the modifier registries have a single instance on both the client and the server thread
     // this means syncing is unneeded, and has the side-effect of recreating all the modifier instances (which can lead to unexpected behavior)
     // as a result, integrated servers just mark fullyLoaded as true without syncing anything, side-effect is listeners may run twice on single player
@@ -307,23 +305,22 @@ public class JsonHelper {
     // on a dedicated server, the client is running a separate game instance, this is where we send packets, plus fully loaded should already be true
     // this event is not fired when connecting to a server
     if (!player.connection.connection.isMemoryConnection()) {
-      PacketTarget target = PacketDistributor.PLAYER.with(() -> player);
-      for (ISimplePacket packet : packets) {
-        network.send(target, packet);
+      for (CustomPacketPayload payload : payloads) {
+        PacketDistributor.sendToPlayer(player, payload);
       }
     }
   }
 
-  /** Called when the player logs in to send packets */
-  public static void syncPackets(OnDatapackSyncEvent event, NetworkWrapper network, ISimplePacket... packets) {
+  /** Called when the player logs in to send payloads */
+  public static void syncPayloads(OnDatapackSyncEvent event, CustomPacketPayload... payloads) {
     // send to single player
     ServerPlayer targetedPlayer = event.getPlayer();
     if (targetedPlayer != null) {
-      sendPackets(network, targetedPlayer, packets);
+      sendPayloads(targetedPlayer, payloads);
     } else {
       // send to all players
       for (ServerPlayer player : event.getPlayerList().getPlayers()) {
-        sendPackets(network, player, packets);
+        sendPayloads(player, payloads);
       }
     }
   }

@@ -15,9 +15,9 @@ import slimeknights.mantle.client.book.BookScreenOpener;
 import slimeknights.mantle.client.book.data.content.ContentError;
 import slimeknights.mantle.client.book.repository.BookRepository;
 import slimeknights.mantle.client.book.transformer.BookTransformer;
+import net.neoforged.neoforge.network.PacketDistributor;
 import slimeknights.mantle.client.screen.book.BookScreen;
-import slimeknights.mantle.network.MantleNetwork;
-import slimeknights.mantle.network.packet.DropLecternBookPacket;
+import slimeknights.mantle.network.packet.DropLecternBookPayload;
 
 import javax.annotation.Nullable;
 import java.io.BufferedReader;
@@ -401,7 +401,7 @@ public class BookData implements IDataItem, BookScreenOpener {
   public void openGui(BlockPos pos, ItemStack stack) {
     String page = BookHelper.getCurrentSavedPage(stack);
 
-    Consumer<?> bookPickup = (v) -> MantleNetwork.INSTANCE.network.sendToServer(new DropLecternBookPacket(pos));
+    Consumer<?> bookPickup = (v) -> PacketDistributor.sendToServer(new DropLecternBookPayload(pos));
 
     openGui(stack.getHoverName(), page, newPage -> BookLoader.updateSavedPage(pos, newPage), bookPickup);
   }

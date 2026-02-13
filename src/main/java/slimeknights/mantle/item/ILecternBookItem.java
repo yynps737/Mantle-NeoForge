@@ -1,11 +1,12 @@
 package slimeknights.mantle.item;
 
+import net.minecraft.core.BlockPos;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.Level;
-import slimeknights.mantle.network.MantleNetwork;
-import slimeknights.mantle.network.packet.OpenLecternBookPacket;
+import net.neoforged.neoforge.network.PacketDistributor;
+import slimeknights.mantle.network.packet.OpenLecternBookPayload;
 
 /** Interface for book items to work with lecterns */
 public interface ILecternBookItem {
@@ -18,7 +19,9 @@ public interface ILecternBookItem {
    * @return  True if the normal screen should not be opened
    */
   default boolean openLecternScreen(Level world, BlockPos pos, Player player, ItemStack book) {
-    MantleNetwork.INSTANCE.sendTo(new OpenLecternBookPacket(pos, book), player);
+    if (player instanceof ServerPlayer serverPlayer) {
+      PacketDistributor.sendToPlayer(serverPlayer, new OpenLecternBookPayload(pos, book));
+    }
     return true;
   }
 

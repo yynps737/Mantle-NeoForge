@@ -85,7 +85,7 @@ public class FluidContainerTransferManager extends SimpleJsonResourceReloadListe
       e.addListener(this);
       this.context = e.getConditionContext();
     });
-    NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, OnDatapackSyncEvent.class, e -> JsonHelper.syncPackets(e, MantleNetwork.INSTANCE, new FluidContainerTransferPacket(this.getContainerItems())));
+    NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, OnDatapackSyncEvent.class, e -> JsonHelper.syncPayloads(e, new FluidContainerTransferPayload(this.getContainerItems())));
   }
 
   /** Loads transfer from JSON */

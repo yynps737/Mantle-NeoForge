@@ -36,11 +36,11 @@ import slimeknights.mantle.client.book.data.element.IngredientData;
 import slimeknights.mantle.client.book.repository.BookRepository;
 import slimeknights.mantle.client.book.transformer.BookTransformer;
 import slimeknights.mantle.client.book.transformer.IndexTransformer;
+import net.neoforged.neoforge.network.PacketDistributor;
 import slimeknights.mantle.data.gson.ResourceLocationSerializer;
-import slimeknights.mantle.network.MantleNetwork;
-import slimeknights.mantle.network.packet.UpdateHeldPagePacket;
-import slimeknights.mantle.network.packet.UpdateInventoryPagePacket;
-import slimeknights.mantle.network.packet.UpdateLecternPagePacket;
+import slimeknights.mantle.network.packet.UpdateHeldPagePayload;
+import slimeknights.mantle.network.packet.UpdateInventoryPagePayload;
+import slimeknights.mantle.network.packet.UpdateLecternPagePayload;
 
 import javax.annotation.Nullable;
 import java.lang.reflect.Type;
@@ -191,7 +191,7 @@ public class BookLoader implements ResourceManagerReloadListener {
       ItemStack item = player.getItemInHand(hand);
       if (!item.isEmpty()) {
         BookHelper.writeSavedPageToBook(item, page);
-        MantleNetwork.INSTANCE.network.sendToServer(new UpdateHeldPagePacket(hand, page));
+        PacketDistributor.sendToServer(new UpdateHeldPagePayload(hand, page));
       }
     }
   }
@@ -207,7 +207,7 @@ public class BookLoader implements ResourceManagerReloadListener {
       ItemStack item = player.getInventory().getItem(slot);
       if (!item.isEmpty()) {
         BookHelper.writeSavedPageToBook(item, page);
-        MantleNetwork.INSTANCE.network.sendToServer(new UpdateInventoryPagePacket(slot, page));
+        PacketDistributor.sendToServer(new UpdateInventoryPagePayload(slot, page));
       }
     }
   }
@@ -218,7 +218,7 @@ public class BookLoader implements ResourceManagerReloadListener {
    * @param page    New page
    */
   public static void updateSavedPage(BlockPos pos, String page) {
-    MantleNetwork.INSTANCE.network.sendToServer(new UpdateLecternPagePacket(pos, page));
+    PacketDistributor.sendToServer(new UpdateLecternPagePayload(pos, page));
   }
 
   public static Gson getGson() {

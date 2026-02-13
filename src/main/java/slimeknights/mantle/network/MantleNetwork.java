@@ -1,35 +1,87 @@
 package slimeknights.mantle.network;
 
-import net.neoforged.neoforge.network.NetworkDirection;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import slimeknights.mantle.Mantle;
-import slimeknights.mantle.fluid.transfer.FluidContainerTransferPacket;
-import slimeknights.mantle.network.packet.DropLecternBookPacket;
-import slimeknights.mantle.network.packet.OpenLecternBookPacket;
-import slimeknights.mantle.network.packet.OpenNamedBookPacket;
-import slimeknights.mantle.network.packet.SwingArmPacket;
-import slimeknights.mantle.network.packet.UpdateHeldPagePacket;
-import slimeknights.mantle.network.packet.UpdateInventoryPagePacket;
-import slimeknights.mantle.network.packet.UpdateLecternPagePacket;
+import slimeknights.mantle.fluid.transfer.FluidContainerTransferPayload;
+import slimeknights.mantle.network.packet.DropLecternBookPayload;
+import slimeknights.mantle.network.packet.OpenLecternBookPayload;
+import slimeknights.mantle.network.packet.OpenNamedBookPayload;
+import slimeknights.mantle.network.packet.SwingArmPayload;
+import slimeknights.mantle.network.packet.UpdateHeldPagePayload;
+import slimeknights.mantle.network.packet.UpdateInventoryPagePayload;
+import slimeknights.mantle.network.packet.UpdateLecternPagePayload;
 
+/**
+ * Network handler for Mantle using the new NeoForge 1.21+ payload system
+ */
+@EventBusSubscriber(modid = Mantle.modId, bus = EventBusSubscriber.Bus.MOD)
 public class MantleNetwork {
   /**
-   * Network instance
+   * Network version
    * 1: 1.11.101 and before
    * 2: 1.11.102 - New predicate types, enum loadable nullable field optimization
+   * 3: 1.21.1 - NeoForge CustomPacketPayload migration
    */
-  public static final NetworkWrapper INSTANCE = new NetworkWrapper(Mantle.getResource("network"), "2");
+  private static final String VERSION = "3";
 
   /**
-   * Registers packets into this network
+   * Registers all network payloads for Mantle
    */
-  public static void registerPackets() {
-    INSTANCE.registerPacket(OpenLecternBookPacket.class, OpenLecternBookPacket::new, NetworkDirection.PLAY_TO_CLIENT);
-    INSTANCE.registerPacket(UpdateHeldPagePacket.class, UpdateHeldPagePacket::new, NetworkDirection.PLAY_TO_SERVER);
-    INSTANCE.registerPacket(UpdateInventoryPagePacket.class, UpdateInventoryPagePacket::new, NetworkDirection.PLAY_TO_SERVER);
-    INSTANCE.registerPacket(UpdateLecternPagePacket.class, UpdateLecternPagePacket::new, NetworkDirection.PLAY_TO_SERVER);
-    INSTANCE.registerPacket(DropLecternBookPacket.class, DropLecternBookPacket::new, NetworkDirection.PLAY_TO_SERVER);
-    INSTANCE.registerPacket(SwingArmPacket.class, SwingArmPacket::new, NetworkDirection.PLAY_TO_CLIENT);
-    INSTANCE.registerPacket(OpenNamedBookPacket.class, OpenNamedBookPacket::new, NetworkDirection.PLAY_TO_CLIENT);
-    INSTANCE.registerPacket(FluidContainerTransferPacket.class, FluidContainerTransferPacket::new, NetworkDirection.PLAY_TO_CLIENT);
+  @SubscribeEvent
+  public static void registerPayloads(RegisterPayloadHandlersEvent event) {
+    final PayloadRegistrar registrar = event.registrar(VERSION);
+
+    // Client-bound payloads (server -> client)
+    registrar.playToClient(
+      OpenLecternBookPayload.TYPE,
+      OpenLecternBookPayload.STREAM_CODEC,
+      OpenLecternBookPayload::handle
+    );
+
+    registrar.playToClient(
+      SwingArmPayload.TYPE,
+      SwingArmPayload.STREAM_CODEC,
+      SwingArmPayload::handle
+    );
+
+    registrar.playToClient(
+      OpenNamedBookPayload.TYPE,
+      OpenNamedBookPayload.STREAM_CODEC,
+      OpenNamedBookPayload::handle
+    );
+
+    registrar.playToClient(
+      FluidContainerTransferPayload.TYPE,
+      FluidContainerTransferPayload.STREAM_CODEC,
+      FluidContainerTransferPayload::handle
+    );
+
+    // Server-bound payloads (client -> server)
+    registrar.playToServer(
+      UpdateHeldPagePayload.TYPE,
+      UpdateHeldPagePayload.STREAM_CODEC,
+      UpdateHeldPagePayload::handle
+    );
+
+    registrar.playToServer(
+      UpdateInventoryPagePayload.TYPE,
+      UpdateInventoryPagePayload.STREAM_CODEC,
+      UpdateInventoryPagePayload::handle
+    );
+
+    registrar.playToServer(
+      UpdateLecternPagePayload.TYPE,
+      UpdateLecternPagePayload.STREAM_CODEC,
+      UpdateLecternPagePayload::handle
+    );
+
+    registrar.playToServer(
+      DropLecternBookPayload.TYPE,
+      DropLecternBookPayload.STREAM_CODEC,
+      DropLecternBookPayload::handle
+    );
   }
 }

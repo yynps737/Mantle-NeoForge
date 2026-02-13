@@ -127,7 +127,6 @@ public class Mantle {
   }
 
   private void commonSetup(final FMLCommonSetupEvent event) {
-    MantleNetwork.registerPackets();
     MantleCommand.init();
     OffhandCooldownTracker.init();
     TagPreference.init();
