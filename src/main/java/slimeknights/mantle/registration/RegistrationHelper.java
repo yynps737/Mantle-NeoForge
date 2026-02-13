@@ -10,8 +10,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.state.properties.WoodType;
-import net.neoforged.neoforge.registries.MissingMappingsEvent;
-import net.neoforged.neoforge.registries.MissingMappingsEvent.Mapping;
 import slimeknights.mantle.util.RegistryHelper;
 
 import javax.annotation.Nullable;
@@ -55,21 +53,19 @@ public class RegistrationHelper {
 
   /**
    * Handles missing mappings for the given registry
+   * NOTE: MissingMappingsEvent has been removed in NeoForge 1.21.1.
+   * Missing mappings are now handled automatically or through alternative mechanisms.
+   * This method is kept for reference but should not be called.
+   *
    * @param event    Mappings event
    * @param handler  Mapping handler
    * @param <T>      Event type
+   * @deprecated Removed in NeoForge 1.21.1 - MissingMappingsEvent no longer exists
    */
-  public static <T> void handleMissingMappings(MissingMappingsEvent event, String modID, ResourceKey<? extends Registry<T>> registry, Function<String, T> handler) {
-    // event is kinda nice, automatically filters mappings to the registry type via the key
-    for (Mapping<T> mapping : event.getAllMappings(registry)) {
-      ResourceLocation id = mapping.getKey();
-      if (modID.equals(id.getNamespace())) {
-        @Nullable T value = handler.apply(id.getPath());
-        if (value != null) {
-          mapping.remap(value);
-        }
-      }
-    }
+  @Deprecated(forRemoval = true)
+  public static <T> void handleMissingMappings(Object event, String modID, ResourceKey<? extends Registry<T>> registry, Function<String, T> handler) {
+    throw new UnsupportedOperationException("MissingMappingsEvent has been removed in NeoForge 1.21.1. " +
+      "Missing mappings are now handled automatically by the registry system.");
   }
 
   /** Registers a wood type to be injected into the atlas, should be called before client setup */

@@ -25,7 +25,6 @@ import net.neoforged.fml.ModLoadingContext;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig.Type;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.fml.javafmlmod.FMLJavaModLoadingContext;
 import net.neoforged.fml.loading.FMLEnvironment;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.registries.RegisterEvent;
@@ -101,7 +100,7 @@ public class Mantle {
   public static Mantle instance;
 
   /* Proxies for sides, used for graphics processing */
-  public Mantle() {
+  public Mantle(IEventBus modEventBus) {
     ModLoadingContext.get().registerConfig(Type.CLIENT, Config.CLIENT_SPEC);
     ModLoadingContext.get().registerConfig(Type.SERVER, Config.SERVER_SPEC);
 
@@ -109,12 +108,11 @@ public class Mantle {
     MantleTags.init();
 
     instance = this;
-    IEventBus bus = FMLJavaModLoadingContext.get().getModEventBus();
-    bus.addListener(EventPriority.NORMAL, false, FMLCommonSetupEvent.class, this::commonSetup);
-    bus.addListener(EventPriority.NORMAL, false, RegisterCapabilitiesEvent.class, this::registerCapabilities);
-    bus.addListener(EventPriority.NORMAL, false, GatherDataEvent.class, this::gatherData);
-    bus.addListener(EventPriority.NORMAL, false, RegisterEvent.class, this::register);
-    MantleRecipes.init(bus);
+    modEventBus.addListener(EventPriority.NORMAL, false, FMLCommonSetupEvent.class, this::commonSetup);
+    modEventBus.addListener(EventPriority.NORMAL, false, RegisterCapabilitiesEvent.class, this::registerCapabilities);
+    modEventBus.addListener(EventPriority.NORMAL, false, GatherDataEvent.class, this::gatherData);
+    modEventBus.addListener(EventPriority.NORMAL, false, RegisterEvent.class, this::register);
+    MantleRecipes.init(modEventBus);
     NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, PlayerInteractEvent.RightClickBlock.class, LecternBookItem::interactWithBlock);
 
     if (FMLEnvironment.dist == Dist.CLIENT) {
