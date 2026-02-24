@@ -1,5 +1,6 @@
 package slimeknights.mantle.data.predicate.entity;
 
+import net.minecraft.core.Holder;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
@@ -14,7 +15,7 @@ public record HasEnchantmentEntityPredicate(Enchantment enchantment) implements 
 
   @Override
   public boolean matches(LivingEntity entity) {
-    return EnchantmentHelper.getEnchantmentLevel(enchantment, entity) > 0;
+    return EnchantmentHelper.getEnchantmentLevel(Holder.direct(enchantment), entity) > 0;
   }
 
   @Override

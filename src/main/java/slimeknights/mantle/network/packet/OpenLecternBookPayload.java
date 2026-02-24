@@ -34,7 +34,7 @@ public record OpenLecternBookPayload(BlockPos pos, ItemStack book) implements Cu
    * Handles this payload on the client side
    */
   public static void handle(OpenLecternBookPayload payload, IPayloadContext context) {
-    context.workHandler().execute(() -> {
+    context.enqueueWork(() -> {
       if (payload.book.getItem() instanceof ILecternBookItem) {
         ((ILecternBookItem) payload.book.getItem()).openLecternScreenClient(payload.pos, payload.book);
       }

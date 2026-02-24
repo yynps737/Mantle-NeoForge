@@ -1,25 +1,25 @@
 package slimeknights.mantle.recipe;
 
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.world.Container;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.RecipeInput;
 
 /**
  * Recipe that has an output other than an {@link ItemStack}
- * @param <C>  Inventory type
+ * @param <T>  Recipe input type
  */
-public interface ICustomOutputRecipe<C extends Container> extends ICommonRecipe<C> {
+public interface ICustomOutputRecipe<T extends RecipeInput> extends ICommonRecipe<T> {
   /** @deprecated Item stack output not supported */
   @Override
   @Deprecated
-  default ItemStack getResultItem(RegistryAccess access) {
+  default ItemStack getResultItem(HolderLookup.Provider registries) {
     return ItemStack.EMPTY;
   }
 
   /** @deprecated Item stack output not supported */
   @Override
   @Deprecated
-  default ItemStack assemble(C inv, RegistryAccess access) {
+  default ItemStack assemble(T input, HolderLookup.Provider registries) {
     return ItemStack.EMPTY;
   }
 }

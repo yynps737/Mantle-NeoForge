@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.tags.TagKey;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.item.Item;
@@ -141,7 +142,7 @@ public abstract class ItemOutput implements Supplier<ItemStack> {
    * @param buffer  Packet buffer instance
    */
   public void write(FriendlyByteBuf buffer) {
-    buffer.writeItem(get());
+    ItemStack.STREAM_CODEC.encode((RegistryFriendlyByteBuf) buffer, get());
   }
 
   /**
@@ -150,7 +151,7 @@ public abstract class ItemOutput implements Supplier<ItemStack> {
    * @return  Item output
    */
   public static ItemOutput read(FriendlyByteBuf buffer) {
-    return fromStack(buffer.readItem());
+    return fromStack(ItemStack.STREAM_CODEC.decode((RegistryFriendlyByteBuf) buffer));
   }
 
   /** Class for an output that is just an item, simplifies NBT for serializing as vanilla forces NBT to be set for tools and forge goes through extra steps when NBT is set */
@@ -231,9 +232,6 @@ public abstract class ItemOutput implements Supplier<ItemStack> {
           return ItemStack.EMPTY;
         }
         cachedResult = new ItemStack(preference.orElseThrow(), count);
-        if (nbt != null) {
-          cachedResult.setTag(nbt.copy());
-        }
       }
       return cachedResult;
     }

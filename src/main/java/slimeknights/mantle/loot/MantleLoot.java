@@ -2,13 +2,13 @@ package slimeknights.mantle.loot;
 
 import com.google.gson.JsonDeserializer;
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.MapCodec;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
-import net.minecraft.world.level.storage.loot.Serializer;
 import net.minecraft.world.level.storage.loot.entries.LootPoolEntryType;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunction;
 import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
@@ -45,9 +45,9 @@ public class MantleLoot {
   /** Condition for global loot modifiers that ensures a context set is present. Useful to check if we are in a specific context like entity. */
   public static LootItemConditionType HAS_CONTEXT_SET;
   /** Function to add block entity texture to a dropped item */
-  public static LootItemFunctionType RETEXTURED_FUNCTION;
+  public static LootItemFunctionType<RetexturedLootFunction> RETEXTURED_FUNCTION;
   /** Function to add a fluid to an item fluid capability */
-  public static LootItemFunctionType SET_FLUID_FUNCTION;
+  public static LootItemFunctionType<SetFluidLootFunction> SET_FLUID_FUNCTION;
   /** Entry to pull a value from a tag preference */
   public static LootPoolEntryType TAG_PREFERENCE;
 
@@ -59,36 +59,37 @@ public class MantleLoot {
     ResourceKey<?> key = event.getRegistryKey();
 
     if (key == NeoForgeRegistries.Keys.GLOBAL_LOOT_MODIFIER_SERIALIZERS) {
-      RegistryAdapter<Codec<? extends IGlobalLootModifier>> adapter = new RegistryAdapter<>((net.neoforged.neoforge.registries.IRegistryExtension) Objects.requireNonNull(event.getRegistry()));
-      adapter.register(AddEntryLootModifier.CODEC, "add_entry");
-      adapter.register(ReplaceItemLootModifier.CODEC, "replace_item");
+      @SuppressWarnings("unchecked")
+      RegistryAdapter<MapCodec<? extends IGlobalLootModifier>> adapter = new RegistryAdapter<>((net.minecraft.core.Registry<MapCodec<? extends IGlobalLootModifier>>) (net.minecraft.core.Registry<?>) Objects.requireNonNull(event.getRegistry()));
+      adapter.register((MapCodec<? extends IGlobalLootModifier>) (MapCodec<?>) AddEntryLootModifier.CODEC, "add_entry");
+      adapter.register((MapCodec<? extends IGlobalLootModifier>) (MapCodec<?>) ReplaceItemLootModifier.CODEC, "replace_item");
 
       // loot modifier conditions
       MODIFIER_CONDITIONS.registerDeserializer(InvertedModifierLootCondition.ID, (JsonDeserializer<? extends ILootModifierCondition>)InvertedModifierLootCondition::deserialize);
       MODIFIER_CONDITIONS.registerDeserializer(EmptyModifierLootCondition.ID, EmptyModifierLootCondition.INSTANCE);
       MODIFIER_CONDITIONS.registerDeserializer(ContainsItemModifierLootCondition.ID, (JsonDeserializer<? extends ILootModifierCondition>)ContainsItemModifierLootCondition::deserialize);
     } else if (key == Registries.LOOT_FUNCTION_TYPE) {
-      RETEXTURED_FUNCTION = registerFunction("fill_retextured_block", RetexturedLootFunction.SERIALIZER);
-      SET_FLUID_FUNCTION = registerFunction("set_fluid", SetFluidLootFunction.SERIALIZER);
+      RETEXTURED_FUNCTION = registerFunction("fill_retextured_block", RetexturedLootFunction.CODEC);
+      SET_FLUID_FUNCTION = registerFunction("set_fluid", SetFluidLootFunction.CODEC);
 
     } else if (key == Registries.LOOT_CONDITION_TYPE) {
-      BLOCK_TAG_CONDITION = Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, Mantle.getResource("block_tag"), new LootItemConditionType(BlockTagLootCondition.SERIALIZER));
-      HAS_CONTEXT_SET = Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, Mantle.getResource("has_context_set"), new LootItemConditionType(new HasLootContextSetCondition.Serializer()));
-      TAG_EMPTY = Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, TagEmptyCondition.SERIALIZER.getID(), new LootItemConditionType(TagEmptyCondition.SERIALIZER));
-      TAG_FILLED = Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, TagFilledCondition.SERIALIZER.getID(), new LootItemConditionType(TagFilledCondition.SERIALIZER));
+      BLOCK_TAG_CONDITION = Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, Mantle.getResource("block_tag"), new LootItemConditionType(BlockTagLootCondition.CODEC));
+      HAS_CONTEXT_SET = Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, Mantle.getResource("has_context_set"), new LootItemConditionType(HasLootContextSetCondition.CODEC));
+      TAG_EMPTY = Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, Mantle.getResource("tag_empty"), new LootItemConditionType(TagEmptyCondition.CODEC));
+      TAG_FILLED = Registry.register(BuiltInRegistries.LOOT_CONDITION_TYPE, Mantle.getResource("tag_filled"), new LootItemConditionType(TagFilledCondition.CODEC));
 
     } else if (key == Registries.LOOT_POOL_ENTRY_TYPE) {
-      TAG_PREFERENCE = Registry.register(BuiltInRegistries.LOOT_POOL_ENTRY_TYPE, Mantle.getResource("tag_preference"), new LootPoolEntryType(new TagPreferenceLootEntry.Serializer()));
+      TAG_PREFERENCE = Registry.register(BuiltInRegistries.LOOT_POOL_ENTRY_TYPE, Mantle.getResource("tag_preference"), new LootPoolEntryType(TagPreferenceLootEntry.CODEC));
     }
   }
 
   /**
    * Registers a loot function
-   * @param name        Loot function name
-   * @param serializer  Loot function serializer
+   * @param name   Loot function name
+   * @param codec  Loot function codec
    * @return  Registered loot function
    */
-  private static LootItemFunctionType registerFunction(String name, Serializer<? extends LootItemFunction> serializer) {
-    return Registry.register(BuiltInRegistries.LOOT_FUNCTION_TYPE, Mantle.getResource(name), new LootItemFunctionType(serializer));
+  private static <T extends LootItemFunction> LootItemFunctionType<T> registerFunction(String name, MapCodec<T> codec) {
+    return Registry.register(BuiltInRegistries.LOOT_FUNCTION_TYPE, Mantle.getResource(name), new LootItemFunctionType<>(codec));
   }
 }

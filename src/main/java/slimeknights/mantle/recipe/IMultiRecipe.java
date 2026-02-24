@@ -1,6 +1,6 @@
 package slimeknights.mantle.recipe;
 
-import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.HolderLookup;
 
 import java.util.List;
 
@@ -14,5 +14,5 @@ public interface IMultiRecipe<T> {
    * @return  List of recipes
    * @param access  Registry access instance
    */
-  List<T> getRecipes(RegistryAccess access);
+  List<T> getRecipes(HolderLookup.Provider access);
 }

@@ -12,7 +12,6 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.profiling.InactiveProfiler;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.flag.FeatureFlagSet;
 import net.minecraft.world.item.crafting.RecipeManager;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.biome.Biome;
@@ -45,9 +44,9 @@ import java.util.function.Predicate;
  */
 public class TemplateLevel extends Level {
 
-  private final Map<String, MapItemSavedData> maps = new HashMap<>();
+  private final Map<net.minecraft.world.level.saveddata.maps.MapId, MapItemSavedData> maps = new HashMap<>();
   private final Scoreboard scoreboard = new Scoreboard();
-  private final RecipeManager recipeManager = new RecipeManager();
+  private int nextMapId = 0;
   private final TemplateChunkSource chunkSource;
 
   public TemplateLevel(List<StructureBlockInfo> blocks, Predicate<BlockPos> shouldShow) {
@@ -82,18 +81,38 @@ public class TemplateLevel extends Level {
 
   @Nullable
   @Override
-  public MapItemSavedData getMapData(@Nonnull String mapName) {
-    return this.maps.get(mapName);
+  public MapItemSavedData getMapData(net.minecraft.world.level.saveddata.maps.MapId mapId) {
+    return this.maps.get(mapId);
   }
 
   @Override
-  public void setMapData(String mapId, MapItemSavedData mapDataIn) {
+  public void setMapData(net.minecraft.world.level.saveddata.maps.MapId mapId, MapItemSavedData mapDataIn) {
     this.maps.put(mapId, mapDataIn);
   }
 
   @Override
-  public int getFreeMapId() {
-    return this.maps.size();
+  public net.minecraft.world.level.saveddata.maps.MapId getFreeMapId() {
+    return new net.minecraft.world.level.saveddata.maps.MapId(nextMapId++);
+  }
+
+  @Override
+  public float getDayTimeFraction() {
+    return 0;
+  }
+
+  @Override
+  public void setDayTimeFraction(float dayTimeFraction) {
+    // noop
+  }
+
+  @Override
+  public float getDayTimePerTick() {
+    return -1; // no custom speed set
+  }
+
+  @Override
+  public void setDayTimePerTick(float dayTimePerTick) {
+    // noop
   }
 
   @Override
@@ -108,7 +127,7 @@ public class TemplateLevel extends Level {
   @Nonnull
   @Override
   public RecipeManager getRecipeManager() {
-    return this.recipeManager;
+    return Objects.requireNonNull(Minecraft.getInstance().level).getRecipeManager();
   }
 
   @Override
@@ -138,11 +157,21 @@ public class TemplateLevel extends Level {
   public void levelEvent(@Nullable Player player, int type, @Nonnull BlockPos pos, int data) {}
 
   @Override
-  public void gameEvent(GameEvent pEvent, Vec3 pPosition, Context pContext) {}
+  public void gameEvent(Holder<GameEvent> pEvent, Vec3 pPosition, Context pContext) {}
 
   @Override
-  public FeatureFlagSet enabledFeatures() {
-    return FeatureFlagSet.of();
+  public net.minecraft.world.item.alchemy.PotionBrewing potionBrewing() {
+    return net.minecraft.world.item.alchemy.PotionBrewing.EMPTY;
+  }
+
+  @Override
+  public net.minecraft.world.TickRateManager tickRateManager() {
+    return new net.minecraft.world.TickRateManager();
+  }
+
+  @Override
+  public net.minecraft.world.flag.FeatureFlagSet enabledFeatures() {
+    return net.minecraft.world.flag.FeatureFlagSet.of();
   }
 
   @Override

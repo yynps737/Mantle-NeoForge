@@ -34,7 +34,7 @@ public record OpenNamedBookPayload(ResourceLocation book) implements CustomPacke
    * Handles this payload on the client side
    */
   public static void handle(OpenNamedBookPayload payload, IPayloadContext context) {
-    context.workHandler().execute(() -> {
+    context.enqueueWork(() -> {
       BookData bookData = BookLoader.getBook(payload.book);
       if (bookData != null) {
         bookData.openGui(Component.literal("Book"), "", null, null);

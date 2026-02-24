@@ -87,7 +87,7 @@ public class FluidTooltipHandler extends SimpleJsonResourceReloadListener {
   public static void init(RegisterClientReloadListenersEvent manager) {
     manager.registerReloadListener(INSTANCE);
     // clear the cache on tag reload, if the tags changed it might be wrong
-    NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, TagsUpdatedEvent.class, event -> INSTANCE.listCache.clear());
+    NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, (TagsUpdatedEvent event) -> INSTANCE.listCache.clear());
   }
 
   private FluidTooltipHandler() {

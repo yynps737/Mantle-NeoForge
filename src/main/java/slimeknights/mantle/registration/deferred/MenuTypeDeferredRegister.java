@@ -24,7 +24,7 @@ public class MenuTypeDeferredRegister extends DeferredRegisterWrapper<MenuType<?
    * @param <C>      Container type
    * @return  Registry object containing the container type
    */
-  public <C extends AbstractContainerMenu> DeferredHolder<MenuType<C>> register(String name, IContainerFactory<C> factory) {
+  public <C extends AbstractContainerMenu> DeferredHolder<MenuType<?>, MenuType<C>> register(String name, IContainerFactory<C> factory) {
     return register.register(name, () -> IMenuTypeExtension.create(factory));
   }
 }

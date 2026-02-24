@@ -20,7 +20,7 @@ public record UpdateHeldPagePayload(InteractionHand hand, String page) implement
 
   public static final StreamCodec<ByteBuf, UpdateHeldPagePayload> STREAM_CODEC =
     StreamCodec.composite(
-      ByteBufCodecs.fromEnum(InteractionHand.class),
+      ByteBufCodecs.idMapper(i -> InteractionHand.values()[i], InteractionHand::ordinal),
       UpdateHeldPagePayload::hand,
       ByteBufCodecs.stringUtf8(100),
       UpdateHeldPagePayload::page,
@@ -36,15 +36,14 @@ public record UpdateHeldPagePayload(InteractionHand hand, String page) implement
    * Handles this payload on the server side
    */
   public static void handle(UpdateHeldPagePayload payload, IPayloadContext context) {
-    context.workHandler().execute(() -> {
-      context.player().ifPresent(player -> {
-        if (payload.page != null) {
-          ItemStack stack = player.getItemInHand(payload.hand);
-          if (!stack.isEmpty()) {
-            BookHelper.writeSavedPageToBook(stack, payload.page);
-          }
+    context.enqueueWork(() -> {
+      Player player = context.player();
+      if (payload.page != null) {
+        ItemStack stack = player.getItemInHand(payload.hand);
+        if (!stack.isEmpty()) {
+          BookHelper.writeSavedPageToBook(stack, payload.page);
         }
-      });
+      }
     });
   }
 }

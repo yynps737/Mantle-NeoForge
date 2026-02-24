@@ -1,18 +1,18 @@
 package slimeknights.mantle.recipe;
 
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.world.Container;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.item.crafting.RecipeInput;
 
 /**
  * Extension of {@link Recipe} to set some methods that always set.
- * @param <C>  Inventory type
+ * @param <T>  Recipe input type
  */
-public interface ICommonRecipe<C extends Container> extends Recipe<C> {
+public interface ICommonRecipe<T extends RecipeInput> extends Recipe<T> {
   @Override
-  default ItemStack assemble(C inv, RegistryAccess access) {
-    return getResultItem(access).copy();
+  default ItemStack assemble(T input, HolderLookup.Provider registries) {
+    return getResultItem(registries).copy();
   }
 
   /** @deprecated Means nothing outside of crafting tables */

@@ -5,7 +5,8 @@ import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.alchemy.PotionUtils;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.alchemy.PotionContents;
 import net.minecraft.world.item.alchemy.Potions;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.ItemLike;
@@ -51,6 +52,13 @@ public class MantleFluidTransferProvider extends AbstractFluidContainerTransferP
     optionalFillEmpty("rabbit_stew_",   Items.RABBIT_STEW,   Items.BOWL,         MantleTags.Fluids.RABBIT_STEW,   MantleValues.BOWL,   false);
   }
 
+  /** Creates a water potion item stack */
+  private static ItemStack createWaterPotion(ItemLike item) {
+    ItemStack stack = new ItemStack(item);
+    stack.set(DataComponents.POTION_CONTENTS, new PotionContents(Potions.WATER));
+    return stack;
+  }
+
   /** Adds generic fill and empty for a container */
   private void optionalFillEmpty(String prefix, ItemLike item, ItemLike container, TagKey<Fluid> tag, int amount, boolean nbt) {
     addFillEmpty(prefix, item, container, tag, amount, nbt, new TagFilledCondition<>(tag));
@@ -91,7 +99,7 @@ public class MantleFluidTransferProvider extends AbstractFluidContainerTransferP
     // we can always fill water bottles, not always fill splash and lingering
     addTransfer(prefix + "fill_water", new FillFluidContainerTransfer(
       container,
-      ItemOutput.fromStack(PotionUtils.setPotion(new ItemStack(filled), Potions.WATER)),
+      ItemOutput.fromStack(createWaterPotion(filled)),
       FluidIngredient.of(MantleTags.Fluids.WATER, MantleValues.BOTTLE * 2)),
       waterConditions);
   }

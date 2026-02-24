@@ -23,7 +23,7 @@ public record SwingArmPayload(int entityId, InteractionHand hand) implements Cus
     StreamCodec.composite(
       ByteBufCodecs.VAR_INT,
       SwingArmPayload::entityId,
-      ByteBufCodecs.fromEnum(InteractionHand.class),
+      ByteBufCodecs.idMapper(i -> InteractionHand.values()[i], InteractionHand::ordinal),
       SwingArmPayload::hand,
       SwingArmPayload::new
     );
@@ -37,7 +37,7 @@ public record SwingArmPayload(int entityId, InteractionHand hand) implements Cus
    * Handles this payload on the client side
    */
   public static void handle(SwingArmPayload payload, IPayloadContext context) {
-    context.workHandler().execute(() -> {
+    context.enqueueWork(() -> {
       Level level = Minecraft.getInstance().level;
       if (level != null) {
         Entity entity = level.getEntity(payload.entityId);

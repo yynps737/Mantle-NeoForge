@@ -11,7 +11,6 @@ import slimeknights.mantle.data.loadable.primitive.StringLoadable;
 import slimeknights.mantle.data.loadable.record.RecordLoadable;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -44,9 +43,9 @@ public record LootTableInjection(ResourceLocation name, List<LootPoolInjection> 
       LootPool pool = table.getPool(name);
       //noinspection ConstantConditions method is annotated wrongly
       if (pool != null) {
-        int oldLength = pool.entries.length;
-        pool.entries = Arrays.copyOf(pool.entries, oldLength + entries.length);
-        System.arraycopy(entries, 0, pool.entries, oldLength, entries.length);
+        List<LootPoolEntryContainer> mutableEntries = new ArrayList<>(pool.entries);
+        Collections.addAll(mutableEntries, entries);
+        pool.entries = mutableEntries;
       } else {
         Mantle.logger.warn("Failed to inject loot into {} pool {}", table.getLootTableId(), name);
       }

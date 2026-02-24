@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.fluids.FluidStack;
@@ -122,7 +123,7 @@ public abstract class FluidOutput implements Supplier<FluidStack> {
    * @param buffer  Packet buffer instance
    */
   public void write(FriendlyByteBuf buffer) {
-    buffer.writeFluidStack(get());
+    FluidStack.STREAM_CODEC.encode((RegistryFriendlyByteBuf) buffer, get());
   }
 
   /**
@@ -131,7 +132,7 @@ public abstract class FluidOutput implements Supplier<FluidStack> {
    * @return  Item output
    */
   public static FluidOutput read(FriendlyByteBuf buffer) {
-    return fromStack(buffer.readFluidStack());
+    return fromStack(FluidStack.STREAM_CODEC.decode((RegistryFriendlyByteBuf) buffer));
   }
 
   /** Class for an output that is just an item, simplifies NBT for serializing as vanilla forces NBT to be set for tools and forge goes through extra steps when NBT is set */
@@ -203,7 +204,7 @@ public abstract class FluidOutput implements Supplier<FluidStack> {
         if (preference.isEmpty()) {
           return FluidStack.EMPTY;
         }
-        cachedResult = new FluidStack(preference.orElseThrow(), amount, nbt);
+        cachedResult = new FluidStack(preference.orElseThrow(), amount);
       }
       return cachedResult;
     }

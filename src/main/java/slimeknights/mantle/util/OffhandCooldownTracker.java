@@ -42,7 +42,7 @@ public class OffhandCooldownTracker {
   /** Registers the capability with the event bus */
   public static void register(RegisterCapabilitiesEvent event) {
     event.registerEntity(CAPABILITY, EntityType.PLAYER, (player, context) -> {
-      return INSTANCES.computeIfAbsent((Player) player, OffhandCooldownTracker::new);
+      return INSTANCES.computeIfAbsent((Player) player, p -> new OffhandCooldownTracker(p));
     });
   }
 

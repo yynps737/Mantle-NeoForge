@@ -35,15 +35,14 @@ public record UpdateInventoryPagePayload(int slot, String page) implements Custo
    * Handles this payload on the server side
    */
   public static void handle(UpdateInventoryPagePayload payload, IPayloadContext context) {
-    context.workHandler().execute(() -> {
-      context.player().ifPresent(player -> {
-        if (payload.page != null && payload.slot >= 0) {
-          ItemStack stack = player.getInventory().getItem(payload.slot);
-          if (!stack.isEmpty()) {
-            BookHelper.writeSavedPageToBook(stack, payload.page);
-          }
+    context.enqueueWork(() -> {
+      Player player = context.player();
+      if (payload.page != null && payload.slot >= 0) {
+        ItemStack stack = player.getInventory().getItem(payload.slot);
+        if (!stack.isEmpty()) {
+          BookHelper.writeSavedPageToBook(stack, payload.page);
         }
-      });
+      }
     });
   }
 }

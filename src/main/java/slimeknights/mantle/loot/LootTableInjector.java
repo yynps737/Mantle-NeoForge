@@ -1,14 +1,16 @@
 package slimeknights.mantle.loot;
 
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
+import com.mojang.serialization.JsonOps;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.GsonHelper;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.common.crafting.CraftingHelper;
+import net.neoforged.neoforge.common.conditions.ICondition;
 import net.neoforged.neoforge.common.conditions.ICondition.IContext;
 import net.neoforged.neoforge.event.AddReloadListenerEvent;
 import net.neoforged.neoforge.event.LootTableLoadEvent;
@@ -22,6 +24,7 @@ import java.io.IOException;
 import java.io.Reader;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.function.Function;
@@ -36,11 +39,27 @@ public enum LootTableInjector implements IEarlyReloadListener {
 
   /** Initializes the loot table injector */
   public static void init() {
-    NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, AddReloadListenerEvent.class, event -> {
+    NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, (AddReloadListenerEvent event) -> {
       event.addListener(INSTANCE);
       INSTANCE.context = event.getConditionContext();
     });
-    NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, LootTableLoadEvent.class, INSTANCE::lootTableLoad);
+    NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, INSTANCE::lootTableLoad);
+  }
+
+  /** Evaluates conditions from JSON using ICondition.LIST_CODEC */
+  private static boolean processConditions(JsonObject json, String memberName, IContext conditionContext) {
+    if (!json.has(memberName)) {
+      return true;
+    }
+    JsonArray conditionsArray = json.getAsJsonArray(memberName);
+    List<ICondition> conditions = ICondition.LIST_CODEC.parse(JsonOps.INSTANCE, conditionsArray)
+      .getOrThrow(msg -> new RuntimeException("Failed to parse conditions: " + msg));
+    for (ICondition condition : conditions) {
+      if (!condition.test(conditionContext)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /** Condition context for preventing load */
@@ -58,7 +77,7 @@ public enum LootTableInjector implements IEarlyReloadListener {
         JsonObject json = GsonHelper.fromJson(JsonHelper.DEFAULT_GSON, reader, JsonObject.class);
         if (json != null) {
           // skip if empty for easy removals
-          if (!json.keySet().isEmpty() && CraftingHelper.processConditions(json, "conditions", context)) {
+          if (!json.keySet().isEmpty() && processConditions(json, "conditions", context)) {
             // the builder allows us to merge from multiple sources, for efficiency
             // ensures a given table name and pool name both show just once
             LootTableInjection injection = LootTableInjection.LOADABLE.deserialize(json);

@@ -4,8 +4,6 @@ import com.google.gson.JsonSyntaxException;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
-import net.neoforged.neoforge.registries.NeoForgeRegistries;
-import net.neoforged.neoforge.registries.IRegistryExtension;
 import slimeknights.mantle.data.loadable.Loadable;
 import slimeknights.mantle.data.loadable.mapping.EnumMapLoadable;
 import slimeknights.mantle.data.loadable.primitive.ResourceLocationLoadable;
@@ -13,40 +11,35 @@ import slimeknights.mantle.util.typed.TypedMap;
 
 import java.util.Map;
 
-/** Special loadable for display contexts due to the Forge weirdness in {@link ItemDisplayContext} */
+/** Special loadable for display contexts due to {@link ItemDisplayContext} being an extensible enum */
 public enum DisplayContextLoadable implements ResourceLocationLoadable<ItemDisplayContext> {
   INSTANCE;
 
   @Override
   public ItemDisplayContext fromKey(ResourceLocation name, String key, TypedMap context) {
-    IRegistryExtension<ItemDisplayContext> registry = NeoForgeRegistries.DISPLAY_CONTEXTS.get();
-    if (registry.containsKey(name)) {
-      ItemDisplayContext value = registry.getValue(name);
-      if (value != null) {
+    // ItemDisplayContext is a StringRepresentable enum, look up by serialized name
+    String path = name.getPath();
+    for (ItemDisplayContext value : ItemDisplayContext.values()) {
+      if (value.getSerializedName().equals(path)) {
         return value;
       }
     }
-    throw new JsonSyntaxException("Unable to parse " + key + " as the ItemDisplayContext registry does not contain ID " + name);
+    throw new JsonSyntaxException("Unable to parse " + key + " as the ItemDisplayContext does not contain ID " + name);
   }
 
   @Override
   public ResourceLocation getKey(ItemDisplayContext object) {
-    IRegistryExtension<ItemDisplayContext> registry = NeoForgeRegistries.DISPLAY_CONTEXTS.get();
-    ResourceLocation location = registry.getKey(object);
-    if (location == null) {
-      throw new RuntimeException("ItemDisplayContext registry does not contain object " + object);
-    }
-    return location;
+    return ResourceLocation.withDefaultNamespace(object.getSerializedName());
   }
 
   @Override
   public ItemDisplayContext decode(FriendlyByteBuf buffer, TypedMap context) {
-    return buffer.readRegistryIdUnsafe(NeoForgeRegistries.DISPLAY_CONTEXTS.get());
+    return ItemDisplayContext.BY_ID.apply(buffer.readByte());
   }
 
   @Override
   public void encode(FriendlyByteBuf buffer, ItemDisplayContext value) {
-    buffer.writeRegistryIdUnsafe(NeoForgeRegistries.DISPLAY_CONTEXTS.get(), value);
+    buffer.writeByte(value.getId());
   }
 
   @Override

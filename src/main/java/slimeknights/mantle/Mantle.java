@@ -10,22 +10,24 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.MobType;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 import net.neoforged.neoforge.common.NeoForge;
-import net.neoforged.neoforge.common.crafting.CraftingHelper;
+import net.neoforged.neoforge.common.conditions.ICondition;
 import net.neoforged.neoforge.common.data.ExistingFileHelper;
 import net.neoforged.neoforge.data.event.GatherDataEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerInteractEvent;
 import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig.Type;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import net.neoforged.fml.loading.FMLEnvironment;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import net.neoforged.neoforge.registries.RegisterEvent;
 import org.apache.logging.log4j.LogManager;
@@ -46,7 +48,6 @@ import slimeknights.mantle.data.predicate.entity.BlockAtEntityPredicate;
 import slimeknights.mantle.data.predicate.entity.HasEnchantmentEntityPredicate;
 import slimeknights.mantle.data.predicate.entity.HasMobEffectPredicate;
 import slimeknights.mantle.data.predicate.entity.LivingEntityPredicate;
-import slimeknights.mantle.data.predicate.entity.MobTypePredicate;
 import slimeknights.mantle.data.predicate.fluid.FluidPredicate;
 import slimeknights.mantle.data.predicate.fluid.FluidTypePredicate;
 import slimeknights.mantle.data.predicate.item.ItemPredicate;
@@ -79,6 +80,8 @@ import slimeknights.mantle.registration.RegistrationHelper;
 import slimeknights.mantle.registration.adapter.BlockEntityTypeRegistryAdapter;
 import slimeknights.mantle.util.OffhandCooldownTracker;
 
+import com.mojang.serialization.MapCodec;
+
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -97,13 +100,23 @@ public class Mantle {
   /** Namespace for common tags, used for easier migration to the future "c" standard */
   public static final String COMMON = "forge";
 
+  // Condition codec registration
+  private static final DeferredRegister<MapCodec<? extends ICondition>> CONDITION_CODECS =
+    DeferredRegister.create(NeoForgeRegistries.Keys.CONDITION_CODECS, modId);
+  public static final DeferredHolder<MapCodec<? extends ICondition>, MapCodec<TagEmptyCondition<?>>> TAG_EMPTY_CONDITION =
+    CONDITION_CODECS.register("tag_empty", () -> TagEmptyCondition.CODEC);
+  public static final DeferredHolder<MapCodec<? extends ICondition>, MapCodec<TagFilledCondition<?>>> TAG_FILLED_CONDITION =
+    CONDITION_CODECS.register("tag_filled", () -> TagFilledCondition.CODEC);
+  public static final DeferredHolder<MapCodec<? extends ICondition>, MapCodec<TagCombinationCondition<?>>> TAG_COMBINATION_CONDITION =
+    CONDITION_CODECS.register("tag_combination_filled", () -> TagCombinationCondition.CODEC);
+
   /* Instance of this mod, used for grabbing prototype fields */
   public static Mantle instance;
 
   /* Proxies for sides, used for graphics processing */
-  public Mantle(IEventBus modEventBus) {
-    ModLoadingContext.get().registerConfig(Type.CLIENT, Config.CLIENT_SPEC);
-    ModLoadingContext.get().registerConfig(Type.SERVER, Config.SERVER_SPEC);
+  public Mantle(IEventBus modEventBus, ModContainer container) {
+    container.registerConfig(Type.CLIENT, Config.CLIENT_SPEC);
+    container.registerConfig(Type.SERVER, Config.SERVER_SPEC);
 
     FluidContainerTransferManager.INSTANCE.init();
     MantleTags.init();
@@ -111,13 +124,14 @@ public class Mantle {
     instance = this;
     // Register ingredient types for NeoForge 1.21.1+
     MantleIngredientTypes.INGREDIENT_TYPES.register(modEventBus);
+    CONDITION_CODECS.register(modEventBus);
 
-    modEventBus.addListener(EventPriority.NORMAL, false, FMLCommonSetupEvent.class, this::commonSetup);
-    modEventBus.addListener(EventPriority.NORMAL, false, RegisterCapabilitiesEvent.class, this::registerCapabilities);
-    modEventBus.addListener(EventPriority.NORMAL, false, GatherDataEvent.class, this::gatherData);
-    modEventBus.addListener(EventPriority.NORMAL, false, RegisterEvent.class, this::register);
+    modEventBus.addListener(EventPriority.NORMAL, this::commonSetup);
+    modEventBus.addListener(EventPriority.NORMAL, this::registerCapabilities);
+    modEventBus.addListener(EventPriority.NORMAL, this::gatherData);
+    modEventBus.addListener(EventPriority.NORMAL, this::register);
     MantleRecipes.init(modEventBus);
-    NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, false, PlayerInteractEvent.RightClickBlock.class, LecternBookItem::interactWithBlock);
+    NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, LecternBookItem::interactWithBlock);
 
     if (FMLEnvironment.dist == Dist.CLIENT) {
       ClientEvents.onConstruct();
@@ -138,9 +152,7 @@ public class Mantle {
   private void register(RegisterEvent event) {
     ResourceKey<?> key = event.getRegistryKey();
     if (key == Registries.RECIPE_SERIALIZER) {
-      CraftingHelper.register(TagEmptyCondition.SERIALIZER);
-      CraftingHelper.register(TagFilledCondition.SERIALIZER);
-      CraftingHelper.register(TagCombinationCondition.SERIALIZER);
+      // Note: Condition codecs now registered via CONDITION_CODECS DeferredRegister in constructor
       // Note: Ingredient types now registered via MantleIngredientTypes.INGREDIENT_TYPES in constructor
 
       // fluid container transfer
@@ -188,14 +200,7 @@ public class Mantle {
         LivingEntityPredicate.LOADER.register(getResource("underwater"), LivingEntityPredicate.UNDERWATER.getLoader());
         LivingEntityPredicate.LOADER.register(getResource("raining_at"), LivingEntityPredicate.RAINING.getLoader());
         // property
-        LivingEntityPredicate.LOADER.register(getResource("mob_type"), MobTypePredicate.LOADER);
         LivingEntityPredicate.LOADER.register(getResource("has_enchantment"), HasEnchantmentEntityPredicate.LOADER);
-        // register mob types
-        MobTypePredicate.MOB_TYPES.register(new ResourceLocation("undefined"), MobType.UNDEFINED);
-        MobTypePredicate.MOB_TYPES.register(new ResourceLocation("undead"), MobType.UNDEAD);
-        MobTypePredicate.MOB_TYPES.register(new ResourceLocation("arthropod"), MobType.ARTHROPOD);
-        MobTypePredicate.MOB_TYPES.register(new ResourceLocation("illager"), MobType.ILLAGER);
-        MobTypePredicate.MOB_TYPES.register(new ResourceLocation("water"), MobType.WATER);
 
         // damage predicates
         // simple
@@ -209,7 +214,8 @@ public class Mantle {
       }
     }
     else if (key == Registries.BLOCK_ENTITY_TYPE) {
-      BlockEntityTypeRegistryAdapter adapter = new BlockEntityTypeRegistryAdapter((net.neoforged.neoforge.registries.IRegistryExtension) Objects.requireNonNull(event.getRegistry()));
+      @SuppressWarnings("unchecked")
+      BlockEntityTypeRegistryAdapter adapter = new BlockEntityTypeRegistryAdapter((net.minecraft.core.Registry<BlockEntityType<?>>) (net.minecraft.core.Registry<?>) Objects.requireNonNull(event.getRegistry()));
       Set<Block> signs = MantleSignBlockEntity.buildSignBlocks();
       if (!signs.isEmpty()) {
         adapter.register(MantleSignBlockEntity::new, signs, "sign");
@@ -221,7 +227,7 @@ public class Mantle {
     }
     else if (key == Registries.COMMAND_ARGUMENT_TYPE) {
       ResourceOrTagKeyArgument.Info<?> info = new ResourceOrTagKeyArgument.Info<>();
-      NeoForgeRegistries.COMMAND_ARGUMENT_TYPES.register(getResource("resource_or_tag_key"), info);
+      event.register(Registries.COMMAND_ARGUMENT_TYPE, getResource("resource_or_tag_key"), () -> info);
       ArgumentTypeInfos.registerByClass(RegistrationHelper.genericArgumentType(ResourceOrTagKeyArgument.class), info);
     }
     else {
@@ -249,7 +255,7 @@ public class Mantle {
    * @return  Resource location instance
    */
   public static ResourceLocation getResource(String name) {
-    return new ResourceLocation(modId, name);
+    return ResourceLocation.fromNamespaceAndPath(modId, name);
   }
 
   /**
@@ -258,7 +264,7 @@ public class Mantle {
    * @return  Resource location instance
    */
   public static ResourceLocation commonResource(String name) {
-    return new ResourceLocation(COMMON, name);
+    return ResourceLocation.fromNamespaceAndPath(COMMON, name);
   }
 
   /**

@@ -38,37 +38,35 @@ public record DropLecternBookPayload(BlockPos pos) implements CustomPacketPayloa
    */
   @SuppressWarnings("deprecation")
   public static void handle(DropLecternBookPayload payload, IPayloadContext context) {
-    context.workHandler().execute(() -> {
-      context.player().ifPresent(p -> {
-        if (!(p instanceof ServerPlayer player)) {
-          return;
-        }
+    context.enqueueWork(() -> {
+      if (!(context.player() instanceof ServerPlayer player)) {
+        return;
+      }
 
-        ServerLevel world = player.serverLevel();
-        if (!world.hasChunkAt(payload.pos)) {
-          return;
-        }
+      ServerLevel world = player.serverLevel();
+      if (!world.hasChunkAt(payload.pos)) {
+        return;
+      }
 
-        BlockState state = world.getBlockState(payload.pos);
+      BlockState state = world.getBlockState(payload.pos);
 
-        if (state.getBlock() instanceof LecternBlock && state.getValue(LecternBlock.HAS_BOOK)) {
-          BlockEntity te = world.getBlockEntity(payload.pos);
-          if (te instanceof LecternBlockEntity lecternTe) {
-            ItemStack book = lecternTe.getBook().copy();
-            if (!book.isEmpty()) {
-              if (!player.addItem(book)) {
-                player.drop(book, false, false);
-              }
-
-              lecternTe.clearContent();
-
-              // fix lectern state
-              world.setBlock(payload.pos, state.setValue(LecternBlock.POWERED, false).setValue(LecternBlock.HAS_BOOK, false), 3);
-              world.updateNeighborsAt(payload.pos.below(), state.getBlock());
+      if (state.getBlock() instanceof LecternBlock && state.getValue(LecternBlock.HAS_BOOK)) {
+        BlockEntity te = world.getBlockEntity(payload.pos);
+        if (te instanceof LecternBlockEntity lecternTe) {
+          ItemStack book = lecternTe.getBook().copy();
+          if (!book.isEmpty()) {
+            if (!player.addItem(book)) {
+              player.drop(book, false, false);
             }
+
+            lecternTe.clearContent();
+
+            // fix lectern state
+            world.setBlock(payload.pos, state.setValue(LecternBlock.POWERED, false).setValue(LecternBlock.HAS_BOOK, false), 3);
+            world.updateNeighborsAt(payload.pos.below(), state.getBlock());
           }
         }
-      });
+      }
     });
   }
 }

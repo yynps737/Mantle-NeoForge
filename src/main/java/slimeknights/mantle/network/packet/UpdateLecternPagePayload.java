@@ -39,18 +39,17 @@ public record UpdateLecternPagePayload(BlockPos pos, String page) implements Cus
    * Handles this payload on the server side
    */
   public static void handle(UpdateLecternPagePayload payload, IPayloadContext context) {
-    context.workHandler().execute(() -> {
-      context.player().ifPresent(player -> {
-        if (payload.page != null) {
-          Level world = player.level();
-          BlockEntityHelper.get(LecternBlockEntity.class, world, payload.pos).ifPresent(te -> {
-            ItemStack stack = te.getBook();
-            if (!stack.isEmpty()) {
-              BookHelper.writeSavedPageToBook(stack, payload.page);
-            }
-          });
-        }
-      });
+    context.enqueueWork(() -> {
+      Player player = context.player();
+      if (payload.page != null) {
+        Level world = player.level();
+        BlockEntityHelper.get(LecternBlockEntity.class, world, payload.pos).ifPresent(te -> {
+          ItemStack stack = te.getBook();
+          if (!stack.isEmpty()) {
+            BookHelper.writeSavedPageToBook(stack, payload.page);
+          }
+        });
+      }
     });
   }
 }

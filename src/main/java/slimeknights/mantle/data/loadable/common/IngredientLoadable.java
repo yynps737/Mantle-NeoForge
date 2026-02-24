@@ -1,19 +1,26 @@
 package slimeknights.mantle.data.loadable.common;
 
 import com.google.gson.JsonElement;
+import com.mojang.serialization.JsonOps;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.world.item.crafting.Ingredient;
 import slimeknights.mantle.data.loadable.Loadable;
 import slimeknights.mantle.util.typed.TypedMap;
 
-/** Loadable for ingredients, handling Forge ingredients */
+/** Loadable for ingredients */
 public enum IngredientLoadable implements Loadable<Ingredient> {
   ALLOW_EMPTY,
   DISALLOW_EMPTY;
 
   @Override
   public Ingredient convert(JsonElement element, String key, TypedMap context) {
-    return Ingredient.fromJson(element, this == ALLOW_EMPTY);
+    Ingredient ingredient = Ingredient.CODEC.parse(JsonOps.INSTANCE, element)
+      .getOrThrow();
+    if (ingredient.isEmpty() && this == DISALLOW_EMPTY) {
+      throw new IllegalArgumentException("Ingredient cannot be empty for key " + key);
+    }
+    return ingredient;
   }
 
   @Override
@@ -21,16 +28,17 @@ public enum IngredientLoadable implements Loadable<Ingredient> {
     if (object.isEmpty() && this == DISALLOW_EMPTY) {
       throw new IllegalArgumentException("Ingredient cannot be empty");
     }
-    return object.toJson();
+    return Ingredient.CODEC.encodeStart(JsonOps.INSTANCE, object)
+      .getOrThrow();
   }
 
   @Override
   public Ingredient decode(FriendlyByteBuf buffer, TypedMap context) {
-    return Ingredient.fromNetwork(buffer);
+    return Ingredient.CONTENTS_STREAM_CODEC.decode((RegistryFriendlyByteBuf) buffer);
   }
 
   @Override
   public void encode(FriendlyByteBuf buffer, Ingredient object) {
-    object.toNetwork(buffer);
+    Ingredient.CONTENTS_STREAM_CODEC.encode((RegistryFriendlyByteBuf) buffer, object);
   }
 }

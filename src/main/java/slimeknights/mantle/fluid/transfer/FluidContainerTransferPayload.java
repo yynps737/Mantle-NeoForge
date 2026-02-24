@@ -1,7 +1,7 @@
 package slimeknights.mantle.fluid.transfer;
 
-import io.netty.buffer.ByteBuf;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
@@ -21,14 +21,14 @@ public record FluidContainerTransferPayload(Set<Item> items) implements CustomPa
     new CustomPacketPayload.Type<>(Mantle.getResource("fluid_container_transfer"));
 
   // Stream codec for Item using registry ID
-  private static final StreamCodec<ByteBuf, Item> ITEM_STREAM_CODEC = ByteBufCodecs.registry(BuiltInRegistries.ITEM.key());
+  private static final StreamCodec<RegistryFriendlyByteBuf, Item> ITEM_STREAM_CODEC = ByteBufCodecs.registry(Registries.ITEM);
 
   // Stream codec for List<Item>
-  private static final StreamCodec<ByteBuf, List<Item>> ITEM_LIST_CODEC =
+  private static final StreamCodec<RegistryFriendlyByteBuf, List<Item>> ITEM_LIST_CODEC =
     ITEM_STREAM_CODEC.apply(ByteBufCodecs.list());
 
   // Stream codec for the payload - converts between List and Set
-  public static final StreamCodec<ByteBuf, FluidContainerTransferPayload> STREAM_CODEC =
+  public static final StreamCodec<RegistryFriendlyByteBuf, FluidContainerTransferPayload> STREAM_CODEC =
     ITEM_LIST_CODEC.map(
       list -> new FluidContainerTransferPayload(new HashSet<>(list)),
       payload -> List.copyOf(payload.items)
@@ -43,7 +43,7 @@ public record FluidContainerTransferPayload(Set<Item> items) implements CustomPa
    * Handles this payload on the client side
    */
   public static void handle(FluidContainerTransferPayload payload, IPayloadContext context) {
-    context.workHandler().execute(() -> {
+    context.enqueueWork(() -> {
       FluidContainerTransferManager.INSTANCE.setContainerItems(payload.items);
     });
   }

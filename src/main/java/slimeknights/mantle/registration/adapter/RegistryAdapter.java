@@ -1,9 +1,9 @@
 package slimeknights.mantle.registration.adapter;
 
 import lombok.RequiredArgsConstructor;
+import net.minecraft.core.Registry;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.fml.ModLoadingContext;
-import net.neoforged.neoforge.registries.IRegistryExtension;
 
 import java.util.Objects;
 
@@ -15,7 +15,7 @@ import java.util.Objects;
 @SuppressWarnings("WeakerAccess")
 @RequiredArgsConstructor
 public class RegistryAdapter<T> {
-  private final IRegistryExtension<T> registry;
+  private final Registry<T> registry;
   private final String modId;
 
   /**
@@ -23,7 +23,7 @@ public class RegistryAdapter<T> {
    * If this results in the wrong namespace, use the other constructor where you can provide the modid.
    * The modid is used as the namespace for resource locations, so if your mods id is "foo" it will register an item "bar" as "foo:bar".
    */
-  public RegistryAdapter(IRegistryExtension<T> registry) {
+  public RegistryAdapter(Registry<T> registry) {
     this(registry, ModLoadingContext.get().getActiveContainer().getModId());
   }
 
@@ -32,7 +32,7 @@ public class RegistryAdapter<T> {
    * @param name  Name for location
    */
   public ResourceLocation getResource(String name) {
-    return new ResourceLocation(modId, name);
+    return ResourceLocation.fromNamespaceAndPath(modId, name);
   }
 
   /**
@@ -74,7 +74,7 @@ public class RegistryAdapter<T> {
    * @return Registry entry
    */
   public <I extends T> I register(I entry, ResourceLocation location) {
-    registry.register(location, entry);
+    Registry.register(registry, location, entry);
     return entry;
   }
 }
