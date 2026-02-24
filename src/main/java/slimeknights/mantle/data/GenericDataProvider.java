@@ -98,7 +98,7 @@ public abstract class GenericDataProvider implements DataProvider {
   }
 
   /** Recreation of {@link DataProvider#saveStable(CachedOutput, JsonElement, Path)} that allows swapping tke key comparator */
-  @SuppressWarnings("UnstableApiUsage")
+  @SuppressWarnings({"UnstableApiUsage", "deprecation"})
   static CompletableFuture<?> saveStable(CachedOutput cache, JsonElement pJson, Path pPath, @Nullable Comparator<String> keyComparator) {
     return CompletableFuture.runAsync(() -> {
       try {

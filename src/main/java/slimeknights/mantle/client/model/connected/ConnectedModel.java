@@ -376,6 +376,7 @@ public class ConnectedModel implements IUnbakedGeometry<ConnectedModel> {
       return cache[connections].getQuads(state, side, rand, data, renderType);
     }
 
+    @SuppressWarnings("deprecation")
     @Nonnull
     @Override
     public List<BakedQuad> getQuads(@Nullable BlockState state, @Nullable Direction side, RandomSource rand, ModelData data, @Nullable RenderType renderType) {

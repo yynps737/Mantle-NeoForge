@@ -29,6 +29,7 @@ public abstract class InvertedFluid extends BaseFlowingFluid {
     super(properties);
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public Vec3 getFlow(BlockGetter level, BlockPos pos, FluidState fluid) {
     double xHeight = 0.0D;
@@ -103,6 +104,7 @@ public abstract class InvertedFluid extends BaseFlowingFluid {
     }
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   protected FluidState getNewLiquid(Level level, BlockPos pos, BlockState block) {
     int maxSide = 0;

@@ -151,7 +151,7 @@ public class IngredientData implements IDataElement {
       }
 
       JsonObject object = json.getAsJsonObject();
-      return SizedIngredient.deserialize(object);
+      return SizedIngredient.LOADABLE.deserialize(object);
     }
   }
 }

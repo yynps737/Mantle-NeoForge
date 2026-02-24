@@ -36,6 +36,7 @@ public abstract class LecternBookItem extends TooltipItem implements ILecternBoo
   /**
    * Event handler to control the lectern GUI
    */
+  @SuppressWarnings("deprecation")
   public static void interactWithBlock(PlayerInteractEvent.RightClickBlock event) {
     Level world = event.getLevel();
     // client side has no access to the book, so just skip

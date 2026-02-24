@@ -4,6 +4,9 @@ import com.google.gson.JsonElement;
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.JsonOps;
+import io.netty.handler.codec.DecoderException;
+import io.netty.handler.codec.EncoderException;
+import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.FriendlyByteBuf;
@@ -29,11 +32,13 @@ public record CodecLoadable<T>(DynamicOps<Tag> ops, Codec<T> codec) implements L
 
   @Override
   public T decode(FriendlyByteBuf buffer, TypedMap context) {
-    return buffer.readWithCodecTrusted(ops, codec);
+    Tag tag = buffer.readNbt(NbtAccounter.unlimitedHeap());
+    return codec.parse(ops, tag).getOrThrow(msg -> new DecoderException("Failed to decode: " + msg + " " + tag));
   }
 
   @Override
   public void encode(FriendlyByteBuf buffer, T object) {
-    buffer.writeWithCodec(ops, codec, object);
+    Tag tag = codec.encodeStart(ops, object).getOrThrow(msg -> new EncoderException("Failed to encode: " + msg + " " + object));
+    buffer.writeNbt(tag);
   }
 }

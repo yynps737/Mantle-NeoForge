@@ -1,7 +1,6 @@
 package slimeknights.mantle.network;
 
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.network.registration.PayloadRegistrar;
 import slimeknights.mantle.Mantle;
@@ -17,7 +16,6 @@ import slimeknights.mantle.network.packet.UpdateLecternPagePayload;
 /**
  * Network handler for Mantle using the new NeoForge 1.21+ payload system
  */
-@EventBusSubscriber(modid = Mantle.modId, bus = EventBusSubscriber.Bus.MOD)
 public class MantleNetwork {
   /**
    * Network version

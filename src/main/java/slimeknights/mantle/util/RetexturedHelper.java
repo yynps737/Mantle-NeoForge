@@ -64,7 +64,7 @@ public final class RetexturedHelper {
    */
   public static String getTextureName(ItemStack stack) {
     CustomData customData = stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
-    return getTextureName(customData.getUnsafe());
+    return getTextureName(customData.copyTag());
   }
 
   /**

@@ -35,6 +35,7 @@ import org.apache.logging.log4j.Logger;
 import slimeknights.mantle.block.entity.MantleHangingSignBlockEntity;
 import slimeknights.mantle.block.entity.MantleSignBlockEntity;
 import slimeknights.mantle.client.ClientEvents;
+import slimeknights.mantle.client.render.MantleShaders;
 import slimeknights.mantle.command.MantleCommand;
 import slimeknights.mantle.command.argument.ResourceOrTagKeyArgument;
 import slimeknights.mantle.config.Config;
@@ -130,10 +131,13 @@ public class Mantle {
     modEventBus.addListener(EventPriority.NORMAL, this::registerCapabilities);
     modEventBus.addListener(EventPriority.NORMAL, this::gatherData);
     modEventBus.addListener(EventPriority.NORMAL, this::register);
+    modEventBus.register(MantleNetwork.class);
     MantleRecipes.init(modEventBus);
     NeoForge.EVENT_BUS.addListener(EventPriority.NORMAL, LecternBookItem::interactWithBlock);
 
     if (FMLEnvironment.dist == Dist.CLIENT) {
+      modEventBus.register(ClientEvents.class);
+      modEventBus.register(MantleShaders.class);
       ClientEvents.onConstruct();
     }
   }

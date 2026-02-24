@@ -4,10 +4,8 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import lombok.Getter;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
-import net.neoforged.api.distmarker.Dist;
 import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.EventBusSubscriber;
 import slimeknights.mantle.Mantle;
 import slimeknights.mantle.config.Config;
 
@@ -15,7 +13,6 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 
 /** Handles any custom shaders registered by Mantle. */
-@EventBusSubscriber(modid = Mantle.modId, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class MantleShaders {
   @Nullable
   @Getter

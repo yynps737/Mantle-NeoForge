@@ -55,6 +55,7 @@ public class MantleLoot {
   /**
    * Called during serializer registration to register any relevant loot logic
    */
+  @SuppressWarnings("unchecked")
   public static void registerGlobalLootModifiers(final RegisterEvent event) {
     ResourceKey<?> key = event.getRegistryKey();
 

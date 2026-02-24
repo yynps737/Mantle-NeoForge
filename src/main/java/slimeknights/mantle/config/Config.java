@@ -55,7 +55,7 @@ public class Config {
 		// server options
 		TAG_PREFERENCES = server.comment("Preferences for outputs from tags used in automatic compat in recipes")
                             .translation("config.mantle.tagPreferences")
-                            .defineList("tagPreferences", DEFAULT_TAG_PREFERENCES, str -> true);
+                            .defineList("tagPreferences", DEFAULT_TAG_PREFERENCES, () -> "", str -> true);
 
 		CLIENT_SPEC = client.build();
 		SERVER_SPEC = server.build();

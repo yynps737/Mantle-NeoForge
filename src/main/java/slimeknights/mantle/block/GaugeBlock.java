@@ -76,7 +76,7 @@ public class GaugeBlock extends Block {
           // show simple empty message if gauge amount is hidden
           player.displayClientMessage(formatCapacity(handler.getTankCapacity(0)), true);
         } else {
-          Component contents = Component.translatable(CONTENTS_FORMAT, COMMA_FORMAT.format(fluid.getAmount()), COMMA_FORMAT.format(handler.getTankCapacity(0)), fluid.getDisplayName());
+          Component contents = Component.translatable(CONTENTS_FORMAT, COMMA_FORMAT.format(fluid.getAmount()), COMMA_FORMAT.format(handler.getTankCapacity(0)), fluid.getHoverName());
           player.displayClientMessage(Component.translatable(CONTENTS_KEY, contents), true);
         }
       }

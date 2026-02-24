@@ -95,8 +95,9 @@ public class TextureColorHelper {
   /** Gets the color for the given sprite. Should be from {@link InventoryMenu#BLOCK_ATLAS} */
   public static int getAverageColor(TextureAtlasSprite sprite) {
     ResourceLocation name = sprite.contents().name();
-    if (SPRITE_CACHE.containsKey(name)) {
-      return SPRITE_CACHE.get(name);
+    int cached = SPRITE_CACHE.getOrDefault(name, Integer.MIN_VALUE);
+    if (cached != Integer.MIN_VALUE) {
+      return cached;
     }
     int color = computeAverageColor(sprite);
     SPRITE_CACHE.put(name, color);

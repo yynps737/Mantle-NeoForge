@@ -144,7 +144,7 @@ public class ColoredBlockModel extends SimpleBlockModel {
   /**
    * Data class for setting properties when baking colored elements
    */
-  public record ColorData(int color, @Deprecated int luminosity, @Nullable Boolean uvlock) {
+  public record ColorData(int color, int luminosity, @Nullable Boolean uvlock) {
     public static final ColorData DEFAULT = new ColorData(-1, -1, null);
     public static final RecordLoadable<ColorData> LOADABLE = RecordLoadable.create(
       ColorLoadable.ALPHA.defaultField("color", false, ColorData::color),

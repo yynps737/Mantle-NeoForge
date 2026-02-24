@@ -2,6 +2,7 @@ package slimeknights.mantle.plugin.jei.entity;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import lombok.RequiredArgsConstructor;
+import mezz.jei.api.gui.builder.ITooltipBuilder;
 import mezz.jei.api.ingredients.IIngredientRenderer;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -100,6 +101,7 @@ public class EntityIngredientRenderer implements IIngredientRenderer<EntityIngre
     }
   }
 
+  @SuppressWarnings("removal")
   @Override
   public List<Component> getTooltip(EntityIngredient.EntityInput type, TooltipFlag flag) {
     List<Component> tooltip = new ArrayList<>();
@@ -108,5 +110,13 @@ public class EntityIngredientRenderer implements IIngredientRenderer<EntityIngre
       tooltip.add((Component.literal(BuiltInRegistries.ENTITY_TYPE.getKey(type.type()).toString())).withStyle(ChatFormatting.DARK_GRAY));
     }
     return tooltip;
+  }
+
+  @Override
+  public void getTooltip(ITooltipBuilder tooltip, EntityIngredient.EntityInput type, TooltipFlag flag) {
+    tooltip.add(type.type().getDescription());
+    if (flag.isAdvanced()) {
+      tooltip.add((Component.literal(BuiltInRegistries.ENTITY_TYPE.getKey(type.type()).toString())).withStyle(ChatFormatting.DARK_GRAY));
+    }
   }
 }

@@ -11,6 +11,7 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.List;
 
 /** @deprecated use {@link InventoryBlockEntityRenderer} for the new render item registry. */
+@SuppressWarnings("removal")
 @Deprecated(forRemoval = true)
 public class InventoryTileEntityRenderer<T extends BlockEntity & Container> implements BlockEntityRenderer<T> {
   public InventoryTileEntityRenderer(BlockEntityRendererProvider.Context context) {}

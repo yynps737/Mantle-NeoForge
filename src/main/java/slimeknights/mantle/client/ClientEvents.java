@@ -29,6 +29,7 @@ import net.neoforged.neoforge.client.event.EntityRenderersEvent;
 import net.neoforged.neoforge.client.event.ModelEvent.RegisterGeometryLoaders;
 import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
 import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent;
 import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.neoforge.capabilities.Capabilities;
@@ -36,7 +37,6 @@ import net.neoforged.bus.api.EventPriority;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.capability.IFluidHandler;
-import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
 import slimeknights.mantle.Mantle;
@@ -55,8 +55,14 @@ import slimeknights.mantle.client.render.FluidCuboid;
 import slimeknights.mantle.client.render.RenderItem;
 import slimeknights.mantle.command.client.MantleClientCommand;
 import slimeknights.mantle.datagen.MantleTags;
+import slimeknights.mantle.fluid.InvertedFluidType;
+import slimeknights.mantle.fluid.TextureFluidType;
+import slimeknights.mantle.fluid.texture.ClientInvertedFluidType;
+import slimeknights.mantle.fluid.texture.ClientTextureFluidType;
 import slimeknights.mantle.fluid.texture.FluidTextureManager;
 import slimeknights.mantle.fluid.tooltip.FluidTooltipHandler;
+import net.neoforged.neoforge.fluids.FluidType;
+import net.neoforged.neoforge.registries.NeoForgeRegistries;
 import slimeknights.mantle.registration.MantleRegistrations;
 import slimeknights.mantle.registration.RegistrationHelper;
 import slimeknights.mantle.util.OffhandCooldownTracker;
@@ -66,7 +72,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-@EventBusSubscriber(modid = Mantle.modId, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public class ClientEvents {
   // sprite constants for offhand attack indicator (matching vanilla Gui sprites)
   private static final ResourceLocation CROSSHAIR_ATTACK_INDICATOR_BACKGROUND_SPRITE = ResourceLocation.withDefaultNamespace("hud/crosshair_attack_indicator_background");
@@ -88,7 +93,18 @@ public class ClientEvents {
     }
   }
 
-  @SuppressWarnings("removal")
+  @SubscribeEvent
+  static void registerClientExtensions(RegisterClientExtensionsEvent event) {
+    for (var entry : NeoForgeRegistries.FLUID_TYPES.entrySet()) {
+      FluidType fluidType = entry.getValue();
+      if (fluidType instanceof InvertedFluidType) {
+        event.registerFluidType(new ClientInvertedFluidType(fluidType), fluidType);
+      } else if (fluidType instanceof TextureFluidType) {
+        event.registerFluidType(new ClientTextureFluidType(fluidType), fluidType);
+      }
+    }
+  }
+
   @SubscribeEvent
   static void registerListeners(RegisterClientReloadListenersEvent event) {
     event.registerReloadListener(ModelHelper.LISTENER);
@@ -97,7 +113,6 @@ public class ClientEvents {
     FluidTooltipHandler.init(event);
     FluidTextureManager.init(event);
     event.registerReloadListener(FluidCuboid.REGISTRY);
-    event.registerReloadListener(RenderItem.REGISTRY);
     event.registerReloadListener(RenderItem.STATE_REGISTRY);
     event.registerReloadListener(TextureColorHelper.RELOAD_LISTENER);
   }
@@ -248,7 +263,7 @@ public class ClientEvents {
       // in the tag, don't show capacity
       ResourceLocation id = BuiltInRegistries.FLUID.getKey(fluid.getFluid());
       tooltip = new ArrayList<>(3);
-      tooltip.add(fluid.getDisplayName());
+      tooltip.add(fluid.getHoverName());
       FluidTooltipHandler.appendAdvanced(id, tooltip);
       tooltip.add(GaugeBlock.formatCapacity(handler.getTankCapacity(0)).withStyle(ChatFormatting.GRAY));
       tooltip.add(FluidTooltipHandler.formatModName(id));

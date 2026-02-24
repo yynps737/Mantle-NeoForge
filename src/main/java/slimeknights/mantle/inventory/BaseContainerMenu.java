@@ -317,6 +317,7 @@ public class BaseContainerMenu<TILE extends BlockEntity> extends AbstractContain
    * @return Tile entity, or null if unable to find
    */
   @Nullable
+  @SuppressWarnings("deprecation")
   public static <TILE extends BlockEntity> TILE getTileEntityFromBuf(@Nullable FriendlyByteBuf buf, Class<TILE> type) {
     if (buf == null) {
       return null;

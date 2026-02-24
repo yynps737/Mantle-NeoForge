@@ -23,7 +23,7 @@ import java.util.List;
 /**
  * Logic for a retexturable block. Use alongside {@link IRetexturedBlockEntity} and {@link RetexturedHelper}
  */
-@SuppressWarnings("WeakerAccess")
+@SuppressWarnings({"WeakerAccess", "deprecation"})
 public abstract class RetexturedBlock extends Block implements EntityBlock {
   public RetexturedBlock(Properties properties) {
     super(properties);

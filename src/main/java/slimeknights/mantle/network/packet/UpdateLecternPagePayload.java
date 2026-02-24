@@ -38,6 +38,7 @@ public record UpdateLecternPagePayload(BlockPos pos, String page) implements Cus
   /**
    * Handles this payload on the server side
    */
+  @SuppressWarnings("deprecation")
   public static void handle(UpdateLecternPagePayload payload, IPayloadContext context) {
     context.enqueueWork(() -> {
       Player player = context.player();

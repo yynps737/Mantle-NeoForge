@@ -72,6 +72,7 @@ public abstract class GenericTextureGenerator extends GenericDataProvider {
   }
 
   /** Saves the given image to the given location */
+  @SuppressWarnings("deprecation")
   public static CompletableFuture<?> saveImage(CachedOutput cache, PathProvider pathProvider, ResourceLocation location, NativeImage image) {
     return CompletableFuture.runAsync(() -> {
       try {

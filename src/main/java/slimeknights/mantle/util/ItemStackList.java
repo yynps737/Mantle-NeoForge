@@ -12,7 +12,7 @@ import java.util.List;
 /**
  * Extension of {@link NonNullList} to better handle items in an inventory
  */
-@SuppressWarnings({"WeakerAccess", "unused"})
+@SuppressWarnings({"WeakerAccess", "unused", "unchecked"})
 public class ItemStackList extends NonNullList<ItemStack> {
 
   /**
