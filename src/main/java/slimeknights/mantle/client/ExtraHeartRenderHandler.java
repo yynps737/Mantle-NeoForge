@@ -123,7 +123,6 @@ public class ExtraHeartRenderHandler {
     int top = mc.getWindow().getGuiScaledHeight() - mc.gui.leftHeight;
 
     // grab max health as the max of it or the health we will display
-    // cap it to 20, as this just determines heart count
     int maxHealth = Math.max(Mth.ceil(player.getAttributeValue(Attributes.MAX_HEALTH)), Math.max(displayHealth, health));
     int absorb = Mth.ceil(player.getAbsorptionAmount());
 

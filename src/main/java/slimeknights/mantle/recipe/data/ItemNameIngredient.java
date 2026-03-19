@@ -3,8 +3,10 @@ package slimeknights.mantle.recipe.data;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.mojang.serialization.JsonOps;
 import lombok.RequiredArgsConstructor;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.crafting.Ingredient;
 
 import java.util.Arrays;
 import java.util.List;
@@ -50,5 +52,15 @@ public class ItemNameIngredient {
       array.add(forName(name));
     }
     return array;
+  }
+
+  /**
+   * Converts this ingredient to a real {@link Ingredient} by parsing the generated JSON via the Ingredient codec.
+   * This allows ItemNameIngredient to be used wherever an Ingredient parameter is required in recipe builders.
+   * The resulting ingredient references items by name that may not exist at datagen time (cross-mod compat).
+   */
+  public Ingredient toIngredient() {
+    return Ingredient.CODEC.parse(JsonOps.INSTANCE, toJson())
+      .getOrThrow(msg -> new IllegalStateException("Failed to parse ItemNameIngredient to Ingredient: " + msg));
   }
 }
