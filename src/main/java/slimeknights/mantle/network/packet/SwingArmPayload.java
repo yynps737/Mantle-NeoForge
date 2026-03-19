@@ -1,11 +1,9 @@
 package slimeknights.mantle.network.packet;
 
 import io.netty.buffer.ByteBuf;
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.codec.ByteBufCodecs;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -38,7 +36,9 @@ public record SwingArmPayload(int entityId, InteractionHand hand) implements Cus
    */
   public static void handle(SwingArmPayload payload, IPayloadContext context) {
     context.enqueueWork(() -> {
-      Level level = Minecraft.getInstance().level;
+      // Use context.player().level() instead of Minecraft.getInstance().level to avoid
+      // loading client-only classes on the dedicated server side
+      Level level = context.player().level();
       if (level != null) {
         Entity entity = level.getEntity(payload.entityId);
         if (entity instanceof LivingEntity) {
