@@ -125,9 +125,10 @@ public class BookData implements IDataItem, BookScreenOpener {
       // set unicode font if requested
       if (this.appearance.uniformFont) {
         this.fontRenderer = BookScreen.getUniformFont();
-      // font is cached in the book data so we need to clear it; but don't clear it if set to another font instance
-      } else if (this.fontRenderer == BookScreen.getUniformFont()) {
-        this.fontRenderer = null;
+      } else {
+        // always set a valid font renderer, as PageContent.addTitle() and ContentListing.build()
+        // access fontRenderer directly (not through BookScreen.getFontRenderer())
+        this.fontRenderer = Minecraft.getInstance().font;
       }
 
       for (int i = 0; i < this.sections.size(); i++) {
