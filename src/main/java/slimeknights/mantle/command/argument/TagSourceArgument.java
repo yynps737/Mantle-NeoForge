@@ -48,6 +48,7 @@ public class TagSourceArgument {
   /** Creates and registers all suggestion providers */
   @Internal
   public static void registerSuggestions() {
+    if (SOURCE != null) return; // guard against double registration
     SOURCE = register(getResource("tag_source"), (context, builder) ->
       SharedSuggestionProvider.suggestResource(allKeys(context).map(ResourceKey::location), builder));
     TAG = register(getResource("tag_source_tag"), (context, builder) -> {
