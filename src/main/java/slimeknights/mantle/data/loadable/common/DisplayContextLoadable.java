@@ -17,10 +17,13 @@ public enum DisplayContextLoadable implements ResourceLocationLoadable<ItemDispl
 
   @Override
   public ItemDisplayContext fromKey(ResourceLocation name, String key, TypedMap context) {
-    // ItemDisplayContext is a StringRepresentable enum, look up by serialized name
+    // ItemDisplayContext is a StringRepresentable enum, look up by serialized name.
+    // Vanilla values use just the path (e.g. "gui"), custom extensible enum values use "namespace:path" (e.g. "tconstruct:table").
     String path = name.getPath();
+    String full = name.toString();
     for (ItemDisplayContext value : ItemDisplayContext.values()) {
-      if (value.getSerializedName().equals(path)) {
+      String serialized = value.getSerializedName();
+      if (serialized.equals(path) || serialized.equals(full)) {
         return value;
       }
     }
@@ -29,7 +32,12 @@ public enum DisplayContextLoadable implements ResourceLocationLoadable<ItemDispl
 
   @Override
   public ResourceLocation getKey(ItemDisplayContext object) {
-    return ResourceLocation.withDefaultNamespace(object.getSerializedName());
+    String serialized = object.getSerializedName();
+    // Vanilla values have plain names like "gui"; custom extensible enum values use "namespace:path".
+    if (serialized.contains(":")) {
+      return ResourceLocation.parse(serialized);
+    }
+    return ResourceLocation.withDefaultNamespace(serialized);
   }
 
   @Override
