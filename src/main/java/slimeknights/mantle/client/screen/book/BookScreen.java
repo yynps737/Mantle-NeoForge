@@ -152,6 +152,14 @@ public class BookScreen extends Screen {
   }
 
   @Override
+  public void renderBackground(GuiGraphics guiGraphics, int mouseX, int mouseY, float partialTick) {
+    // BookScreen renders its own custom background (cover texture, page textures),
+    // skip the default Screen.renderBackground() which applies blur + dark overlay on top of content.
+    // In 1.21, Screen.render() calls renderBackground() BEFORE widgets but AFTER our content,
+    // since we call super.render() at the end of our render() method.
+  }
+
+  @Override
   public void render(GuiGraphics graphics, int mouseX ,int mouseY, float partialTicks) {
     if(this.minecraft == null) {
       return;
