@@ -19,11 +19,19 @@ import java.util.stream.StreamSupport;
 public class RegistryHelper {
   private RegistryHelper() {}
 
-  /** Gets the registry for the given key, dealing with tags */
+  /** Gets the registry for the given key, dealing with tags. Falls back to dynamic registries from the server for data-driven registries like enchantments. */
   @Nullable
   @SuppressWarnings({"unchecked"})
   public static <T> Registry<T> getRegistry(ResourceKey<? extends Registry<T>> key) {
-    return (Registry<T>) BuiltInRegistries.REGISTRY.get(key.location());
+    Registry<T> registry = (Registry<T>) BuiltInRegistries.REGISTRY.get(key.location());
+    if (registry == null) {
+      // Try dynamic registries from the current server (for data-driven registries like enchantments)
+      net.minecraft.server.MinecraftServer server = net.neoforged.neoforge.server.ServerLifecycleHooks.getCurrentServer();
+      if (server != null) {
+        registry = server.registryAccess().registry(key).orElse(null);
+      }
+    }
+    return registry;
   }
 
   /** Gets a stream of tag holders for the given registry */
